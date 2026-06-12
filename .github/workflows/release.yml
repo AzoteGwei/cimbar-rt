@@ -25,7 +25,7 @@ jobs:
           options: -v ${{ github.workspace }}:/usr/src/app
           shell: bash
           run: |
-            bash /usr/src/app/package-wasm.sh
+            bash /usr/src/app/scripts/package-wasm.sh
 
       - name: Show results
         run: ls -l web/

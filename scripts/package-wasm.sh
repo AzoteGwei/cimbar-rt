@@ -6,7 +6,7 @@ CIMBAR_ROOT=${CIMBAR_ROOT:-/usr/src/app}
 cd $CIMBAR_ROOT
 
 apt update
-apt install python3 ninja-build -y
+apt install python3 python3-pip ninja-build -y
 
 pip3 install meson
 
@@ -18,10 +18,11 @@ python3 ../platforms/js/build_js.py build_wasm --emscripten_dir=/emsdk/upstream/
 cd $CIMBAR_ROOT
 meson setup build-wasm \
   --cross-file build/wasm-cross.ini \
+  --prefix $CIMBAR_ROOT/dist \
   -Dwasm=1 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
 ninja -C build-wasm install
-(cd ../web/ && bash wasmgz.sh)
+(cd $CIMBAR_ROOT/web/ && bash wasmgz.sh)
 
 if [ -n "$SKIP_JS" ]; then
 	echo "early exit"
@@ -31,9 +32,10 @@ fi
 cd $CIMBAR_ROOT
 meson setup build-asmjs \
   --cross-file build/wasm-cross.ini \
+  --prefix $CIMBAR_ROOT/dist \
   -Dwasm=2 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
 ninja -C build-asmjs install
-(cd ../web/ && zip cimbar.asmjs.zip cimbar_js.js index.html main.js)
+(cd $CIMBAR_ROOT/web/ && zip cimbar.asmjs.zip cimbar_js.js index.html main.js)
 
 (cd $CIMBAR_ROOT && python3 scripts/package-html.py)

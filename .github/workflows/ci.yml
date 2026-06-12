@@ -36,7 +36,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
 
     - name: Configure Meson
-      run: ${{ matrix.config.env }} meson setup build
+      run: ${{ matrix.config.env }} meson setup build --prefix ${{ github.workspace }}/dist
 
     - name: Build
       run: ninja -C build && meson install -C build
