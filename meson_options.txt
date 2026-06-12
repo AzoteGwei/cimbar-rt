@@ -1,0 +1,8 @@
+option('wasm', type: 'integer', value: 0, min: 0, max: 2,
+  description: 'WASM build mode: 0=none, 1=wasm, 2=asmjs')
+option('portable_linux', type: 'boolean', value: false,
+  description: 'Build for portable Linux (static link c++/gcc)')
+option('disable_tests', type: 'boolean', value: false,
+  description: 'Disable all tests')
+option('opencv_dir', type: 'string', value: '',
+  description: 'Path to OpenCV install dir (WASM builds)')
