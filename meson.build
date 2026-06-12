@@ -68,17 +68,27 @@ if is_wasm
   if opencv_dir == ''
     error('opencv_dir must be set for WASM builds (-Dopencv_dir=/path/to/opencv4)')
   endif
-  opencv_wasm_lib = opencv_dir / 'opencv-build-wasm' / 'build_wasm'
+  opencv_wasm_build = opencv_dir / 'opencv-build-wasm' / 'build_wasm'
 
-  # OpenCV WASM headers
-  opencv_inc = include_directories(
-    opencv_dir / 'include',
-    opencv_wasm_lib,
-  )
+  # OpenCV WASM header paths: top-level include + all module includes
+  opencv_mod_incs = run_command(
+    find_program('bash'), '-c', 'echo ' + opencv_dir / 'modules/*/include',
+    check: false,
+  ).stdout().strip().split()
+  opencv_inc_args = [
+    '-I' + opencv_dir / 'include',
+    '-I' + opencv_wasm_build,
+  ]
+  foreach d : opencv_mod_incs
+    if d != ''
+      opencv_inc_args += '-I' + d
+    endif
+  endforeach
 
-  # OpenCV WASM static libraries: glob all .a files from the wasm build
+  # OpenCV WASM static libraries
+  opencv_lib_dir = opencv_wasm_build / 'lib'
   opencv_a_glob = run_command(
-    find_program('bash'), '-c', 'echo ' + opencv_wasm_lib / 'lib/*.a',
+    find_program('bash'), '-c', 'echo ' + opencv_lib_dir + '/*.a',
     check: false,
   ).stdout().strip().split()
   opencv_link_args = []
@@ -89,7 +99,7 @@ if is_wasm
   endforeach
 
   opencv_dep = declare_dependency(
-    include_directories: opencv_inc,
+    compile_args: opencv_inc_args,
     link_args: opencv_link_args,
   )
 else
