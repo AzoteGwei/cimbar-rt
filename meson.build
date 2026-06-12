@@ -103,6 +103,6 @@ subdir('src/api')
 if not is_wasm
   subdir('tools')
 endif
-#if not disable_tests
-#  subdir('test')
-#endif
+if not disable_tests
+  subdir('test')
+endif
