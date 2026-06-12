@@ -69,6 +69,13 @@ ninja -C build
 meson install -C build
 ```
 
+使用 ccache 加速重复构建：
+```
+CC="ccache gcc" CXX="ccache g++" meson setup build
+ninja -C build
+```
+或使用 native 文件：`meson setup build --native-file build/native-ccache.ini`
+
 默认情况下，`libcimbar` 将安装构建产品到 `./dist/bin/`。
 
 运行测试（需要初始化 samples 子模块）：

@@ -69,6 +69,13 @@ ninja -C build
 meson install -C build
 ```
 
+To speed up repeated builds with ccache:
+```
+CC="ccache gcc" CXX="ccache g++" meson setup build
+ninja -C build
+```
+Or use the native file: `meson setup build --native-file build/native-ccache.ini`
+
 By default, libcimbar will install build products under `./dist/bin/`.
 
 To run tests (requires initializing the samples submodule):
