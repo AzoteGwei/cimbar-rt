@@ -8,19 +8,19 @@ wasm and asm.js releases are available [here](https://github.com/sz3/libcimbar/r
 
 ## Build
 
-To build, use the `package-wasm.sh` script in a docker container:
+To build, use the `scripts/package-wasm.sh` script in a docker container:
 
 ```
 docker run --mount type=bind,source="$(pwd)",target="/usr/src/app" -it emscripten/emsdk:3.1.39
 ```
 Then, inside the container:
 ```
-bash /usr/src/app/package-wasm.sh
+bash /usr/src/app/scripts/package-wasm.sh
 ```
 
 ## Alternative build for the adventurous
 
-Alternatively, if you have a local emscripten setup, you can try to run the package-wasm.sh commands piecemeal:
+Alternatively, if you have a local emscripten setup, you can try to run the packaging commands piecemeal:
 
 To build opencv.js:
 ```
@@ -32,14 +32,12 @@ python3 ../platforms/js/build_js.py build_wasm --build_wasm --emscripten_dir=/pa
 
 With opencv.js built:
 ```
-mkdir build-wasm
-cd build-wasm
 source /path/to/emscripten/emsdk/emsdk_env.sh
-emcmake cmake .. -DUSE_WASM=1 -DOPENCV_DIR=/path/to/opencv
-make -j5 install
+meson setup build-wasm --cross-file build/wasm-cross.ini -Dwasm=1 -Dopencv_dir=/path/to/opencv
+ninja -C build-wasm install
 ```
 
-(do `-DUSE_WASM=2` to use asm.js instead of wasm)
+(use `-Dwasm=2` for asm.js instead of wasm)
 
 ## What about a WASM cimbar decoder?
 

@@ -55,21 +55,46 @@ Crucially, because the encoder compiles to asmjs and wasm, it can run on anythin
 
 ## Build
 
+Requires [Meson](https://mesonbuild.com/) and [Ninja](https://ninja-build.org/).
+
 1. install opencv and GLFW. On ubuntu/debian, this looks like:
 ```
-sudo apt install libopencv-dev libglfw3-dev libgles2-mesa-dev
+sudo apt install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build
 ```
 
-2. run the cmake + make incantation
+2. configure and build
 ```
-cmake .
-make -j7
-make install
+meson setup build
+ninja -C build
+meson install -C build
 ```
 
-By default, libcimbar will try to install build products under `./dist/bin/`.
+By default, libcimbar will install build products under `./dist/bin/`.
+
+To run tests (requires initializing the samples submodule):
+```
+git submodule update --init
+meson test -C build --verbose
+```
 
 To build cimbar.js (what cimbar.org uses), see [WASM](WASM.md).
+
+### Project structure
+
+```
+libcimbar/
+├── 3rdparty/       # vendored dependencies (zstd, wirehair, libcorrect, fmt, ...)
+├── src/
+│   ├── support/    # infrastructure (bit I/O, text, OS, display)
+│   ├── imgproc/    # image processing (extraction, color, hashing)
+│   ├── core/       # codec (cell encode/decode, fountain, compression, RS)
+│   ├── pipeline/   # encode/decode pipelines (encoder, decoder)
+│   └── api/        # C API (libcimbar bindings)
+├── tools/          # CLI executables (cimbar, cimbar-send, cimbar-recv, ...)
+├── test/           # Catch2 unit tests
+├── web/            # web frontend (cimbar.org)
+└── scripts/        # packaging scripts (WASM, portable Linux)
+```
 
 ## Usage
 
