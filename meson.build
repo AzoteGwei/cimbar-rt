@@ -87,6 +87,7 @@ else
 endif
 
 glfw_dep = dependency('glfw3', required: false)
+gl_dep = dependency('gl', required: false)
 
 # ==================== Include paths ====================
 src_inc = include_directories('src')
@@ -99,7 +100,9 @@ subdir('src/imgproc')
 subdir('src/core')
 subdir('src/pipeline')
 subdir('src/api')
-#subdir('tools')
+if not is_wasm
+  subdir('tools')
+endif
 #if not disable_tests
 #  subdir('test')
 #endif

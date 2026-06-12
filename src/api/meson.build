@@ -77,7 +77,7 @@ else
     api_sources,
     pic: true,
     include_directories: [src_inc, third_party_inc],
-    dependencies: api_deps + [glfw_dep],
+    dependencies: api_deps + [glfw_dep, gl_dep],
   )
 
   api_dep = declare_dependency(
