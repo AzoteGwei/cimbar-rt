@@ -33,22 +33,16 @@ jobs:
         submodules: 'recursive'
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev ${{ matrix.config.extra-packages }}
+      run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build
-
-    - name: Configure CMake
-      working-directory: ${{runner.workspace}}/build
-      run: ${{ matrix.config.env }} cmake $GITHUB_WORKSPACE
+    - name: Configure Meson
+      run: ${{ matrix.config.env }} meson setup build
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . && cmake --install .
+      run: ninja -C build && meson install -C build
 
     - name: Test
-      working-directory: ${{runner.workspace}}/build
-      run: ctest --output-on-failure
+      run: meson test -C build --suite libcimbar --verbose
 
     - name: Usage test
       working-directory: ${{runner.workspace}}/libcimbar/test/py
@@ -64,5 +58,5 @@ jobs:
       run: sudo apt-get install cppcheck
 
     - name: run cppcheck
-      run: cppcheck src/
+      run: cppcheck src/ tools/
 
