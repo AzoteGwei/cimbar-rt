@@ -1,11 +1,4 @@
 # ==================== C API implementation (was cimbar_js) ====================
-api_sources = files(
-  'cimbar_js.cpp',
-  'cimbar_js.h',
-  'cimbar_recv_js.cpp',
-  'cimbar_recv_js.h',
-)
-
 api_deps = [
   core_codec_dep,
   core_compression_dep,
@@ -23,11 +16,11 @@ api_deps = [
   cpp_fs_dep,
 ]
 
-# WASM: emit an executable with emscripten flags
 if is_wasm
-  wasm_recv_sources = []
+  # WASM: emit an executable with emscripten flags
+  wasm_sources = files('cimbar_js.cpp', 'cimbar_js.h')
   if wasm_mode != 2
-    wasm_recv_sources += ['cimbar_recv_js.cpp']
+    wasm_sources += files('cimbar_recv_js.cpp', 'cimbar_recv_js.h')
   endif
 
   wasm_exported_fns = [
@@ -67,12 +60,17 @@ if is_wasm
   endif
 
   executable('cimbar_js',
-    api_sources,
+    wasm_sources,
     dependencies: api_deps,
     link_args: wasm_link_args,
   )
 else
   # Native static library
+  api_sources = files(
+    'cimbar_js.cpp', 'cimbar_js.h',
+    'cimbar_recv_js.cpp', 'cimbar_recv_js.h',
+  )
+
   api_lib = static_library('cimbar_js',
     api_sources,
     pic: true,

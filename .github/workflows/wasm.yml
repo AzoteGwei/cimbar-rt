@@ -43,7 +43,7 @@ jobs:
           options: -v ${{ github.workspace }}:/usr/src/app
           shell: bash
           run: |
-            SKIP_JS=1 bash /usr/src/app/package-wasm.sh
+            SKIP_JS=1 bash /usr/src/app/scripts/package-wasm.sh
 
       - name: copy sample files
         run: cp samples/b/tr_*.png web/test/

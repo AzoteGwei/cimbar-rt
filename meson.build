@@ -5,7 +5,7 @@ project('libcimbar', 'cpp', 'c',
     'cpp_std=c++17',
     'c_std=c99',
     'buildtype=debugoptimized',
-    'b_lto=true',
+    'b_lto=false',
     'warning_level=2',
   ],
 )
