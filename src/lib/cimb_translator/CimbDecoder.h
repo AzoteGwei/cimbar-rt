@@ -3,9 +3,9 @@
 
 #include "CellDrift.h"
 #include "Config.h"
-#include "chromatic_adaptation/color_correction.h"
-#include "image_hash/ahash_result.h"
-#include "image_hash/average_hash.h"
+#include "imgproc/color/color_correction.h"
+#include "imgproc/hash/ahash_result.h"
+#include "imgproc/hash/average_hash.h"
 #include "support/os/compiler_constants.h"
 #include <opencv2/opencv.hpp>
 #include <cstdint>

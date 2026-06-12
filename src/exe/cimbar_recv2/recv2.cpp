@@ -3,7 +3,7 @@
 
 #include "cimb_translator/Config.h"
 #include "compression/zstd_decompressor.h"
-#include "extractor/Extractor.h"
+#include "imgproc/extract/Extractor.h"
 #include "fountain/fountain_decoder_sink.h"
 #include "support/display/window_glfw.h"
 

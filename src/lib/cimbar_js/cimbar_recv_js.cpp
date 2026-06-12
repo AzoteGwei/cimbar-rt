@@ -5,7 +5,7 @@
 #include "compression/zstd_header_check.h"
 #include "encoder/Decoder.h"
 #include "encoder/escrow_buffer_writer.h"
-#include "extractor/Extractor.h"
+#include "imgproc/extract/Extractor.h"
 #include "fountain/fountain_decoder_sink.h"
 #include "support/text/str_join.h"
 #include "support/os/File.h"

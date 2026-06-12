@@ -7,7 +7,7 @@
 
 #include "compression/zstd_decompressor.h"
 #include "fountain/fountain_decoder_sink.h"
-#include "image_hash/average_hash.h"
+#include "imgproc/hash/average_hash.h"
 #include "support/text/format.h"
 #include "util/ConfigScope.h"
 #include "support/os/File.h"

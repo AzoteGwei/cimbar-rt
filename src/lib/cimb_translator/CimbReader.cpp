@@ -7,8 +7,8 @@
 #include "Interleave.h"
 
 #include "support/bit/bitmatrix.h"
-#include "chromatic_adaptation/adaptation_transform.h"
-#include "chromatic_adaptation/color_correction.h"
+#include "imgproc/color/adaptation_transform.h"
+#include "imgproc/color/color_correction.h"
 #include <opencv2/opencv.hpp>
 
 using namespace cimbar;

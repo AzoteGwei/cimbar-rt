@@ -4,7 +4,7 @@
 
 #include "encoder/EncoderPlus.h"
 #include "fountain/FountainInit.h"
-#include "image_hash/average_hash.h"
+#include "imgproc/hash/average_hash.h"
 #include "support/text/format.h"
 #include "support/os/byte_istream.h"
 #include "util/ConfigScope.h"

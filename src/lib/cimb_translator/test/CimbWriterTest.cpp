@@ -2,7 +2,7 @@
 #include "unittest.h"
 
 #include "CimbWriter.h"
-#include "image_hash/average_hash.h"
+#include "imgproc/hash/average_hash.h"
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
