@@ -1,7 +1,7 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "Extractor.h"
 
-#include "cimb_translator/Config.h"
+#include "core/codec/Config.h"
 
 Extractor::Extractor(unsigned padding, cimbar::vec_xy image_size, unsigned anchor_size)
 	: _imageSize({

@@ -4,7 +4,7 @@
 #include "ahash_result.h"
 #include "bit_extractor.h"
 #include "support/bit/bitmatrix.h"
-#include "cimb_translator/Cell.h"
+#include "core/codec/Cell.h"
 #include "support/os/compiler_constants.h"
 
 #include "intx/intx.hpp"

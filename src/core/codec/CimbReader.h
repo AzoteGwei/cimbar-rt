@@ -6,7 +6,7 @@
 #include "PositionData.h"
 
 #include "support/bit/bitbuffer.h"
-#include "fountain/FountainMetadata.h"
+#include "core/fountain/FountainMetadata.h"
 #include "support/os/compiler_constants.h"
 #include <opencv2/opencv.hpp>
 

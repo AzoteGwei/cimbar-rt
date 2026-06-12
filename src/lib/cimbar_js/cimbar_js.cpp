@@ -1,8 +1,8 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "cimbar_js.h"
 
-#include "cimb_translator/Config.h"
-#include "compression/zstd_compressor.h"
+#include "core/codec/Config.h"
+#include "core/compression/zstd_compressor.h"
 #include "encoder/Encoder.h"
 #include "support/display/window_glfw.h"
 #include "support/os/byte_istream.h"

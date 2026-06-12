@@ -5,11 +5,11 @@
 #include "encoder/Decoder.h"
 #include "encoder/EncoderPlus.h"
 
-#include "compression/zstd_decompressor.h"
-#include "fountain/fountain_decoder_sink.h"
+#include "core/compression/zstd_decompressor.h"
+#include "core/fountain/fountain_decoder_sink.h"
 #include "imgproc/hash/average_hash.h"
 #include "support/text/format.h"
-#include "util/ConfigScope.h"
+#include "core/codec/ConfigScope.h"
 #include "support/os/File.h"
 #include "support/os/MakeTempDirectory.h"
 

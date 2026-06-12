@@ -3,8 +3,8 @@
 
 #include "fountain_decoder_stream.h"
 #include "FountainMetadata.h"
-#include "compression/zstd_decompressor.h"
-#include "compression/zstd_header_check.h"
+#include "core/compression/zstd_decompressor.h"
+#include "core/compression/zstd_header_check.h"
 #include "support/text/format.h"
 #include "support/os/File.h"
 

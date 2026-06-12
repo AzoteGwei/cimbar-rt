@@ -2,7 +2,7 @@
 #include "unittest.h"
 #include "TestHelpers.h"
 
-#include "cimb_translator/Config.h"
+#include "core/codec/Config.h"
 #include "cimbar_js/cimbar_js.h"
 #include "cimbar_js/cimbar_recv_js.h"
 #include "support/text/format.h"

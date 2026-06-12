@@ -1,9 +1,9 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
-#include "cimb_translator/Config.h"
-#include "compression/zstd_decompressor.h"
+#include "core/codec/Config.h"
+#include "core/compression/zstd_decompressor.h"
 #include "encoder/Decoder.h"
 #include "imgproc/extract/Extractor.h"
-#include "fountain/fountain_decoder_sink.h"
+#include "core/fountain/fountain_decoder_sink.h"
 #include "support/display/window_glfw.h"
 
 #include "cxxopts/cxxopts.hpp"

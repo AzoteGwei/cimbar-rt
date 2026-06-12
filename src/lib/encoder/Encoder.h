@@ -4,10 +4,10 @@
 #include "reed_solomon_stream.h"
 #include "support/bit/bitreader.h"
 #include "support/bit/bitbuffer.h"
-#include "cimb_translator/CimbWriter.h"
-#include "cimb_translator/Config.h"
-#include "compression/zstd_compressor.h"
-#include "fountain/fountain_encoder_stream.h"
+#include "core/codec/CimbWriter.h"
+#include "core/codec/Config.h"
+#include "core/compression/zstd_compressor.h"
+#include "core/fountain/fountain_encoder_stream.h"
 
 #include <opencv2/opencv.hpp>
 #include <optional>

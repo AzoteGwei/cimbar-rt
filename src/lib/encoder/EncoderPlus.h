@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Encoder.h"
-#include "cimb_translator/Config.h"
+#include "core/codec/Config.h"
 #include "imgproc/extract/Scanner.h"
 #include "support/text/format.h"
 #include "support/os/File.h"

@@ -1,7 +1,7 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "cimbar_js/cimbar_js.h"
 
-#include "cimb_translator/Config.h"
+#include "core/codec/Config.h"
 #include "support/text/str.h"
 #include "support/os/File.h"
 

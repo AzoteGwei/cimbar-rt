@@ -3,11 +3,11 @@
 #include "TestHelpers.h"
 
 #include "encoder/EncoderPlus.h"
-#include "fountain/FountainInit.h"
+#include "core/fountain/FountainInit.h"
 #include "imgproc/hash/average_hash.h"
 #include "support/text/format.h"
 #include "support/os/byte_istream.h"
-#include "util/ConfigScope.h"
+#include "core/codec/ConfigScope.h"
 #include "support/os/File.h"
 #include "support/os/MakeTempDirectory.h"
 

@@ -1,7 +1,7 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "unittest.h"
 
-#include "encoder/reed_solomon_stream.h"
+#include "core/reedsolomon/reed_solomon_stream.h"
 
 #include <fstream>
 #include <iostream>

@@ -1,12 +1,12 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "cimbar_recv_js.h"
 
-#include "cimb_translator/Config.h"
-#include "compression/zstd_header_check.h"
+#include "core/codec/Config.h"
+#include "core/compression/zstd_header_check.h"
 #include "encoder/Decoder.h"
 #include "encoder/escrow_buffer_writer.h"
 #include "imgproc/extract/Extractor.h"
-#include "fountain/fountain_decoder_sink.h"
+#include "core/fountain/fountain_decoder_sink.h"
 #include "support/text/str_join.h"
 #include "support/os/File.h"
 #include "support/os/Timer.h"

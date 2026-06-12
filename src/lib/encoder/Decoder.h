@@ -3,10 +3,10 @@
 
 #include "reed_solomon_stream.h"
 #include "support/bit/bitbuffer.h"
-#include "cimb_translator/CimbDecoder.h"
-#include "cimb_translator/CimbReader.h"
-#include "cimb_translator/Config.h"
-#include "cimb_translator/Interleave.h"
+#include "core/codec/CimbDecoder.h"
+#include "core/codec/CimbReader.h"
+#include "core/codec/Config.h"
+#include "core/codec/Interleave.h"
 #include "support/os/null_stream.h"
 
 #include <opencv2/opencv.hpp>
