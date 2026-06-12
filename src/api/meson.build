@@ -63,6 +63,7 @@ if is_wasm
     wasm_sources,
     dependencies: api_deps,
     link_args: wasm_link_args,
+    install: true,
   )
 else
   # Native static library

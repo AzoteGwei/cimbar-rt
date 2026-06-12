@@ -15,6 +15,7 @@ mkdir -p opencv-build-wasm
 cd opencv-build-wasm
 python3 ../platforms/js/build_js.py build_wasm --emscripten_dir=/emsdk/upstream/emscripten
 
+# --- WASM build ---
 cd $CIMBAR_ROOT
 meson setup build-wasm \
   --cross-file build/wasm-cross.ini \
@@ -22,6 +23,8 @@ meson setup build-wasm \
   -Dwasm=1 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
 ninja -C build-wasm install
+cp $CIMBAR_ROOT/dist/bin/cimbar_js.js $CIMBAR_ROOT/web/
+cp $CIMBAR_ROOT/dist/bin/cimbar_js.wasm $CIMBAR_ROOT/web/ 2>/dev/null || true
 (cd $CIMBAR_ROOT/web/ && bash wasmgz.sh)
 
 if [ -n "$SKIP_JS" ]; then
@@ -29,6 +32,7 @@ if [ -n "$SKIP_JS" ]; then
 	exit 0
 fi
 
+# --- asmjs build ---
 cd $CIMBAR_ROOT
 meson setup build-asmjs \
   --cross-file build/wasm-cross.ini \
@@ -36,6 +40,7 @@ meson setup build-asmjs \
   -Dwasm=2 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
 ninja -C build-asmjs install
+cp $CIMBAR_ROOT/dist/bin/cimbar_js.js $CIMBAR_ROOT/web/
 (cd $CIMBAR_ROOT/web/ && zip cimbar.asmjs.zip cimbar_js.js index.html main.js)
 
 (cd $CIMBAR_ROOT && python3 scripts/package-html.py)
