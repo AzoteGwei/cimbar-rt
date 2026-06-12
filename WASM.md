@@ -33,7 +33,7 @@ python3 ../platforms/js/build_js.py build_wasm --build_wasm --emscripten_dir=/pa
 With opencv.js built:
 ```
 source /path/to/emscripten/emsdk/emsdk_env.sh
-meson setup build-wasm --cross-file build/wasm-cross.ini -Dwasm=1 -Dopencv_dir=/path/to/opencv
+meson setup build-wasm --cross-file config/wasm-cross.ini -Dwasm=1 -Dopencv_dir=/path/to/opencv
 ninja -C build-wasm install
 ```
 

@@ -18,7 +18,7 @@ python3 ../platforms/js/build_js.py build_wasm --emscripten_dir=/emsdk/upstream/
 # --- WASM build ---
 cd $CIMBAR_ROOT
 meson setup build-wasm \
-  --cross-file build/wasm-cross.ini \
+  --cross-file config/wasm-cross.ini \
   --prefix $CIMBAR_ROOT/dist \
   -Dwasm=1 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
@@ -35,7 +35,7 @@ fi
 # --- asmjs build ---
 cd $CIMBAR_ROOT
 meson setup build-asmjs \
-  --cross-file build/wasm-cross.ini \
+  --cross-file config/wasm-cross.ini \
   --prefix $CIMBAR_ROOT/dist \
   -Dwasm=2 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4

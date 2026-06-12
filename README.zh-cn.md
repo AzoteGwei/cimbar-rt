@@ -74,7 +74,7 @@ meson install -C build
 CC="ccache gcc" CXX="ccache g++" meson setup build
 ninja -C build
 ```
-或使用 native 文件：`meson setup build --native-file build/native-ccache.ini`
+或使用 native 文件：`meson setup build --native-file config/native-ccache.ini`
 
 默认情况下，`libcimbar` 将安装构建产品到 `./dist/bin/`。
 
