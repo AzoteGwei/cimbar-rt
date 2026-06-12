@@ -3,8 +3,8 @@
 
 #include "core/codec/Config.h"
 #include "core/compression/zstd_header_check.h"
-#include "encoder/Decoder.h"
-#include "encoder/escrow_buffer_writer.h"
+#include "pipeline/decode/Decoder.h"
+#include "pipeline/encode/escrow_buffer_writer.h"
 #include "imgproc/extract/Extractor.h"
 #include "core/fountain/fountain_decoder_sink.h"
 #include "support/text/str_join.h"

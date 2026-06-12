@@ -3,7 +3,7 @@
 
 #include "core/codec/Config.h"
 #include "core/compression/zstd_compressor.h"
-#include "encoder/Encoder.h"
+#include "pipeline/encode/Encoder.h"
 #include "support/display/window_glfw.h"
 #include "support/os/byte_istream.h"
 #include <sstream>

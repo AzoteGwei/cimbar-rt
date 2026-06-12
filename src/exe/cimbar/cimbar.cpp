@@ -1,8 +1,8 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #include "core/codec/Config.h"
 #include "core/compression/zstd_decompressor.h"
-#include "encoder/DecoderPlus.h"
-#include "encoder/EncoderPlus.h"
+#include "pipeline/decode/DecoderPlus.h"
+#include "pipeline/encode/EncoderPlus.h"
 #include "imgproc/extract/Extractor.h"
 #include "imgproc/extract/SimpleCameraCalibration.h"
 #include "imgproc/extract/Undistort.h"

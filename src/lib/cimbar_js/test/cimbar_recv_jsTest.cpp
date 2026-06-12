@@ -6,7 +6,7 @@
 //#include "cimbar_js/cimbar_js.h"
 #include "cimbar_js/cimbar_recv_js.h"
 #include "core/compression/zstd_decompressor.h"
-#include "encoder/Encoder.h"
+#include "pipeline/encode/Encoder.h"
 #include "support/text/format.h"
 #include "support/os/byte_istream.h"
 

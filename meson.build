@@ -98,7 +98,7 @@ subdir('3rdparty')
 subdir('src/support')
 subdir('src/imgproc')
 subdir('src/core')
-#subdir('src/pipeline')
+subdir('src/pipeline')
 #subdir('src/api')
 #subdir('tools')
 #if not disable_tests

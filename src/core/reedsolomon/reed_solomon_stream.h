@@ -2,7 +2,7 @@
 #pragma once
 
 #include "ReedSolomon.h"
-#include "encoder/aligned_stream.h"
+#include "pipeline/encode/aligned_stream.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
