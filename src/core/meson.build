@@ -5,7 +5,7 @@ core_fountain_dep = declare_dependency(
 
 # ==================== core/compression - zstd compression (header-only) ====================
 core_compression_dep = declare_dependency(
-  include_directories: include_directories('compression'),
+  include_directories: [include_directories('compression'), third_party_inc],
 )
 
 # ==================== core/reedsolomon - Reed-Solomon error correction (header-only) ====================
@@ -31,7 +31,7 @@ core_codec_lib = static_library('cimb_translator',
   pic: true,
   include_directories: [
     include_directories('codec'),
-    src_inc, src_lib_inc, third_party_inc,
+    src_inc, third_party_inc,
   ],
   dependencies: [
     opencv_dep,
@@ -45,6 +45,6 @@ core_codec_dep = declare_dependency(
   link_with: core_codec_lib,
   include_directories: [
     include_directories('codec'),
-    src_inc, src_lib_inc, third_party_inc,
+    src_inc, third_party_inc,
   ],
 )

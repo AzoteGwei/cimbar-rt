@@ -19,11 +19,11 @@ imgproc_extract_src = files(
 imgproc_extract_lib = static_library('extractor',
   imgproc_extract_src,
   pic: true,
-  include_directories: [include_directories('extract'), src_inc, src_lib_inc, third_party_inc],
+  include_directories: [include_directories('extract'), src_inc, third_party_inc],
   dependencies: [opencv_dep, support_os_dep, libpopcnt_dep],
 )
 
 imgproc_extract_dep = declare_dependency(
   link_with: imgproc_extract_lib,
-  include_directories: [include_directories('extract'), src_inc, src_lib_inc, third_party_inc],
+  include_directories: [include_directories('extract'), src_inc, third_party_inc],
 )

@@ -118,6 +118,7 @@ zstd_lib = static_library('zstd',
 zstd_dep = declare_dependency(
   link_with: zstd_lib,
   include_directories: include_directories('zstd/common'),
+  compile_args: ['-DZSTD_STATIC_LINKING_ONLY'],
 )
 
 # ==================== Libcorrect (object library aggregation) ====================

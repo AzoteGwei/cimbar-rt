@@ -1,7 +1,7 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #pragma once
 
-#include "reed_solomon_stream.h"
+#include "core/reedsolomon/reed_solomon_stream.h"
 #include "support/bit/bitbuffer.h"
 #include "core/codec/CimbDecoder.h"
 #include "core/codec/CimbReader.h"

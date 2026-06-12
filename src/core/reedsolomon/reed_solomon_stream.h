@@ -1,7 +1,7 @@
 /* This code is subject to the terms of the Mozilla Public License, v.2.0. http://mozilla.org/MPL/2.0/. */
 #pragma once
 
-#include "ReedSolomon.h"
+#include "core/reedsolomon/ReedSolomon.h"
 #include "pipeline/encode/aligned_stream.h"
 #include <fstream>
 #include <sstream>

@@ -90,7 +90,6 @@ glfw_dep = dependency('glfw3', required: false)
 
 # ==================== Include paths ====================
 src_inc = include_directories('src')
-src_lib_inc = include_directories('src/lib')
 third_party_inc = include_directories('3rdparty')
 
 # ==================== Subprojects ====================
@@ -99,7 +98,7 @@ subdir('src/support')
 subdir('src/imgproc')
 subdir('src/core')
 subdir('src/pipeline')
-#subdir('src/api')
+subdir('src/api')
 #subdir('tools')
 #if not disable_tests
 #  subdir('test')
