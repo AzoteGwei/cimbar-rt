@@ -65,10 +65,33 @@ endif
 # ==================== Dependencies ====================
 if is_wasm
   opencv_dir = get_option('opencv_dir')
-  opencv_libs = []
-  opencv_inc = []
-  # We handle OpenCV for WASM via custom find
-  opencv_dep = dependency('', required: false)
+  if opencv_dir == ''
+    error('opencv_dir must be set for WASM builds (-Dopencv_dir=/path/to/opencv4)')
+  endif
+  opencv_wasm_lib = opencv_dir / 'opencv-build-wasm' / 'build_wasm'
+
+  # OpenCV WASM headers
+  opencv_inc = include_directories(
+    opencv_dir / 'include',
+    opencv_wasm_lib,
+  )
+
+  # OpenCV WASM static libraries: glob all .a files from the wasm build
+  opencv_a_glob = run_command(
+    find_program('bash'), '-c', 'echo ' + opencv_wasm_lib / 'lib/*.a',
+    check: false,
+  ).stdout().strip().split()
+  opencv_link_args = []
+  foreach f : opencv_a_glob
+    if f != ''
+      opencv_link_args += f
+    endif
+  endforeach
+
+  opencv_dep = declare_dependency(
+    include_directories: opencv_inc,
+    link_args: opencv_link_args,
+  )
 else
   if portable_linux
     opencv_dep = dependency('opencv4', method: 'pkg-config', static: true)
