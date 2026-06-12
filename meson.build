@@ -94,7 +94,7 @@ third_party_inc = include_directories('3rdparty')
 
 # ==================== Subprojects ====================
 subdir('3rdparty')
-#subdir('src/support')
+subdir('src/support')
 #subdir('src/imgproc')
 #subdir('src/core')
 #subdir('src/pipeline')

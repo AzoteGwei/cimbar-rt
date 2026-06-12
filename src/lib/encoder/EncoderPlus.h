@@ -4,8 +4,8 @@
 #include "Encoder.h"
 #include "cimb_translator/Config.h"
 #include "extractor/Scanner.h"
-#include "serialize/format.h"
-#include "util/File.h"
+#include "support/text/format.h"
+#include "support/os/File.h"
 
 #include <opencv2/opencv.hpp>
 #include <filesystem>

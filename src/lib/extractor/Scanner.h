@@ -5,7 +5,7 @@
 #include "Corners.h"
 #include "Point.h"
 #include "ScanState.h"
-#include "util/compiler_constants.h"
+#include "support/os/compiler_constants.h"
 
 #include <opencv2/opencv.hpp>
 #include <functional>

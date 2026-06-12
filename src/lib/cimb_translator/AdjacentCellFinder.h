@@ -2,7 +2,7 @@
 #pragma once
 
 #include "CellPositions.h"
-#include "util/vec_xy.h"
+#include "support/os/vec_xy.h"
 #include <array>
 
 class AdjacentCellFinder

@@ -2,7 +2,7 @@
 #include "CimbEncoder.h"
 
 #include "Common.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <cmath>
 #include <iostream>
 using cv::Vec3b;

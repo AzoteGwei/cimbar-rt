@@ -3,7 +3,7 @@
 
 #include "Deskewer.h"
 #include "Scanner.h"
-#include "util/vec_xy.h"
+#include "support/os/vec_xy.h"
 
 #include <opencv2/opencv.hpp>
 #include <vector>

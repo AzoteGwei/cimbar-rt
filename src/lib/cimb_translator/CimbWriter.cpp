@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "Config.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <string>
 #include <iostream>
 using std::string;

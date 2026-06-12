@@ -5,9 +5,9 @@
 #include "FloodDecodePositions.h"
 #include "PositionData.h"
 
-#include "bit_file/bitbuffer.h"
+#include "support/bit/bitbuffer.h"
 #include "fountain/FountainMetadata.h"
-#include "util/compiler_constants.h"
+#include "support/os/compiler_constants.h"
 #include <opencv2/opencv.hpp>
 
 class CimbReader

@@ -7,9 +7,9 @@
 #include "encoder/escrow_buffer_writer.h"
 #include "extractor/Extractor.h"
 #include "fountain/fountain_decoder_sink.h"
-#include "serialize/str_join.h"
-#include "util/File.h"
-#include "util/Timer.h"
+#include "support/text/str_join.h"
+#include "support/os/File.h"
+#include "support/os/Timer.h"
 
 #include <opencv2/opencv.hpp>
 

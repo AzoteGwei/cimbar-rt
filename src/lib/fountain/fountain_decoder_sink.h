@@ -5,8 +5,8 @@
 #include "FountainMetadata.h"
 #include "compression/zstd_decompressor.h"
 #include "compression/zstd_header_check.h"
-#include "serialize/format.h"
-#include "util/File.h"
+#include "support/text/format.h"
+#include "support/os/File.h"
 
 #include <cstdio>
 #include <filesystem>

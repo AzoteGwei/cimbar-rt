@@ -4,7 +4,7 @@
 #include "fountain_encoder_stream.h"
 #include "fountain_decoder_stream.h"
 
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <iostream>
 #include <sstream>
 #include <string>

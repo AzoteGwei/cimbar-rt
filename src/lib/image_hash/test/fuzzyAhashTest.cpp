@@ -3,8 +3,8 @@
 
 #include "average_hash.h"
 
-#include "bit_file/bitbuffer.h"
-#include "bit_file/bitmatrix.h"
+#include "support/bit/bitbuffer.h"
+#include "support/bit/bitmatrix.h"
 #include "cimb_translator/CellDrift.h"
 #include "cimb_translator/Common.h"
 #include <opencv2/opencv.hpp>

@@ -7,7 +7,7 @@
 #include "Corners.h"
 #include "Midpoints.h"
 #include "Point.h"
-#include "serialize/str_join.h"
+#include "support/text/str_join.h"
 #include <iostream>
 #include <string>
 #include <vector>

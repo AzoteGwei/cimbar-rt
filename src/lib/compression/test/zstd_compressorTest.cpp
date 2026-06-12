@@ -4,7 +4,7 @@
 #include "zstd_compressor.h"
 #include "zstd_decompressor.h"
 
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <iostream>
 #include <sstream>
 #include <string>

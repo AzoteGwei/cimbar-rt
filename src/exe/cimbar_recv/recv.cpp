@@ -4,11 +4,11 @@
 #include "encoder/Decoder.h"
 #include "extractor/Extractor.h"
 #include "fountain/fountain_decoder_sink.h"
-#include "gui/window_glfw.h"
+#include "support/display/window_glfw.h"
 
 #include "cxxopts/cxxopts.hpp"
-#include "serialize/str.h"
-#include "serialize/str_join.h"
+#include "support/text/str.h"
+#include "support/text/str_join.h"
 
 #include <GLFW/glfw3.h>
 #include <opencv2/videoio.hpp>

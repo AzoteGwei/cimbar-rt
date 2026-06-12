@@ -3,7 +3,7 @@
 
 #include "FountainDecoder.h"
 #include "FountainEncoder.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 
 #include "base91/base.hpp"
 #include <iostream>

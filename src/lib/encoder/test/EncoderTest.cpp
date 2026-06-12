@@ -5,11 +5,11 @@
 #include "encoder/EncoderPlus.h"
 #include "fountain/FountainInit.h"
 #include "image_hash/average_hash.h"
-#include "serialize/format.h"
-#include "util/byte_istream.h"
+#include "support/text/format.h"
+#include "support/os/byte_istream.h"
 #include "util/ConfigScope.h"
-#include "util/File.h"
-#include "util/MakeTempDirectory.h"
+#include "support/os/File.h"
+#include "support/os/MakeTempDirectory.h"
 
 #include <iostream>
 #include <sstream>

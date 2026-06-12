@@ -4,8 +4,8 @@
 #include "cimb_translator/Config.h"
 #include "compression/zstd_compressor.h"
 #include "encoder/Encoder.h"
-#include "gui/window_glfw.h"
-#include "util/byte_istream.h"
+#include "support/display/window_glfw.h"
+#include "support/os/byte_istream.h"
 #include <sstream>
 
 namespace {

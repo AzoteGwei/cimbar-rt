@@ -3,7 +3,7 @@
 
 #include "zstd/zstd.h"
 
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <array>
 #include <sstream>
 #include <vector>

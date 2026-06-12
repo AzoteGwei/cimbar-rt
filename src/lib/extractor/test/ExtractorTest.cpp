@@ -4,7 +4,7 @@
 
 #include "ExtractorPlus.h"
 #include "image_hash/average_hash.h"
-#include "util/MakeTempDirectory.h"
+#include "support/os/MakeTempDirectory.h"
 #include <iostream>
 #include <string>
 #include <vector>

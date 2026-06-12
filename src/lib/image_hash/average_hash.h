@@ -3,9 +3,9 @@
 
 #include "ahash_result.h"
 #include "bit_extractor.h"
-#include "bit_file/bitmatrix.h"
+#include "support/bit/bitmatrix.h"
 #include "cimb_translator/Cell.h"
-#include "util/compiler_constants.h"
+#include "support/os/compiler_constants.h"
 
 #include "intx/intx.hpp"
 #include <opencv2/opencv.hpp>

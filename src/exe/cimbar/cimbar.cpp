@@ -8,7 +8,7 @@
 #include "extractor/Undistort.h"
 #include "fountain/FountainInit.h"
 #include "fountain/fountain_decoder_sink.h"
-#include "serialize/str.h"
+#include "support/text/str.h"
 
 #include "cxxopts/cxxopts.hpp"
 

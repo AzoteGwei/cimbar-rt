@@ -8,10 +8,10 @@
 #include "compression/zstd_decompressor.h"
 #include "fountain/fountain_decoder_sink.h"
 #include "image_hash/average_hash.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include "util/ConfigScope.h"
-#include "util/File.h"
-#include "util/MakeTempDirectory.h"
+#include "support/os/File.h"
+#include "support/os/MakeTempDirectory.h"
 
 #include <iostream>
 #include <string>

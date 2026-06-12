@@ -3,7 +3,7 @@
 
 #include "bit_extractor.h"
 #include "intx/intx.hpp"
-#include "serialize/format.h"
+#include "support/text/format.h"
 
 #include <string>
 #include <tuple>

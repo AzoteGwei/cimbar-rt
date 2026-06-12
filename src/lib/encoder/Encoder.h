@@ -2,8 +2,8 @@
 #pragma once
 
 #include "reed_solomon_stream.h"
-#include "bit_file/bitreader.h"
-#include "bit_file/bitbuffer.h"
+#include "support/bit/bitreader.h"
+#include "support/bit/bitbuffer.h"
 #include "cimb_translator/CimbWriter.h"
 #include "cimb_translator/Config.h"
 #include "compression/zstd_compressor.h"

@@ -5,8 +5,8 @@
 #include "Common.h"
 #include "Config.h"
 #include "image_hash/hamming_distance.h"
-#include "serialize/format.h"
-#include "util/compiler_constants.h"
+#include "support/text/format.h"
+#include "support/os/compiler_constants.h"
 
 #include <algorithm>
 #include <iostream>

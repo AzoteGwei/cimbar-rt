@@ -2,12 +2,12 @@
 #pragma once
 
 #include "reed_solomon_stream.h"
-#include "bit_file/bitbuffer.h"
+#include "support/bit/bitbuffer.h"
 #include "cimb_translator/CimbDecoder.h"
 #include "cimb_translator/CimbReader.h"
 #include "cimb_translator/Config.h"
 #include "cimb_translator/Interleave.h"
-#include "util/null_stream.h"
+#include "support/os/null_stream.h"
 
 #include <opencv2/opencv.hpp>
 #include <functional>

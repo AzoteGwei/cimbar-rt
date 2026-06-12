@@ -5,10 +5,10 @@
 #include "fountain_encoder_stream.h"
 #include "fountain_decoder_sink.h"
 
-#include "serialize/format.h"
-#include "serialize/str_join.h"
-#include "util/File.h"
-#include "util/MakeTempDirectory.h"
+#include "support/text/format.h"
+#include "support/text/str_join.h"
+#include "support/os/File.h"
+#include "support/os/MakeTempDirectory.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>

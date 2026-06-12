@@ -3,7 +3,7 @@
 
 #include "Interleave.h"
 #include "CellPositions.h"
-#include "serialize/str_join.h"
+#include "support/text/str_join.h"
 
 #include <iostream>
 #include <string>

@@ -3,7 +3,7 @@
 
 #include "CellPositions.h"
 #include "CimbEncoder.h"
-#include "util/vec_xy.h"
+#include "support/os/vec_xy.h"
 
 class CimbWriter
 {

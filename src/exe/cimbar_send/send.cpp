@@ -2,8 +2,8 @@
 #include "cimbar_js/cimbar_js.h"
 
 #include "cimb_translator/Config.h"
-#include "serialize/str.h"
-#include "util/File.h"
+#include "support/text/str.h"
+#include "support/os/File.h"
 
 #include "cxxopts/cxxopts.hpp"
 #include <GLFW/glfw3.h>

@@ -5,7 +5,7 @@
 #include "cimb_translator/Config.h"
 #include "cimbar_js/cimbar_js.h"
 #include "cimbar_js/cimbar_recv_js.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 
 #include <iostream>
 #include <string>

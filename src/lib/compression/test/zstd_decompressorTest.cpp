@@ -3,9 +3,9 @@
 
 #include "zstd_decompressor.h"
 
-#include "serialize/format.h"
-#include "util/File.h"
-#include "util/MakeTempDirectory.h"
+#include "support/text/format.h"
+#include "support/os/File.h"
+#include "support/os/MakeTempDirectory.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>

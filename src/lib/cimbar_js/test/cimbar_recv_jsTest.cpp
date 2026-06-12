@@ -7,8 +7,8 @@
 #include "cimbar_js/cimbar_recv_js.h"
 #include "compression/zstd_decompressor.h"
 #include "encoder/Encoder.h"
-#include "serialize/format.h"
-#include "util/byte_istream.h"
+#include "support/text/format.h"
+#include "support/os/byte_istream.h"
 
 #include <iostream>
 #include <string>

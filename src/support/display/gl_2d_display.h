@@ -3,7 +3,7 @@
 
 #include "gl_program.h"
 #include "gl_shader.h"
-#include "util/loop_iterator.h"
+#include "support/os/loop_iterator.h"
 
 #include <GLES3/gl3.h>
 #include <GLES2/gl2ext.h>

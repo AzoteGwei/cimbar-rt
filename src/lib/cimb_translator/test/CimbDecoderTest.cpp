@@ -4,10 +4,10 @@
 
 #include "CimbDecoder.h"
 
-#include "bit_file/bitbuffer.h"
-#include "bit_file/bitmatrix.h"
+#include "support/bit/bitbuffer.h"
+#include "support/bit/bitmatrix.h"
 #include "cimb_translator/Common.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>

@@ -5,11 +5,11 @@
 #include "compression/zstd_decompressor.h"
 #include "extractor/Extractor.h"
 #include "fountain/fountain_decoder_sink.h"
-#include "gui/window_glfw.h"
+#include "support/display/window_glfw.h"
 
 #include "cxxopts/cxxopts.hpp"
-#include "serialize/format.h"
-#include "serialize/str.h"
+#include "support/text/format.h"
+#include "support/text/str.h"
 
 #include <GLFW/glfw3.h>
 #include <opencv2/videoio.hpp>

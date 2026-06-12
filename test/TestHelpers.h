@@ -1,6 +1,6 @@
 
 #include <opencv2/opencv.hpp>
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <string>
 
 namespace TestCimbar

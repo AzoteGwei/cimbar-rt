@@ -4,7 +4,7 @@
 
 #include "DecoderPlus.h"
 #include "util/ConfigScope.h"
-#include "util/MakeTempDirectory.h"
+#include "support/os/MakeTempDirectory.h"
 
 #include "PicoSHA2/picosha2.h"
 #include <fstream>

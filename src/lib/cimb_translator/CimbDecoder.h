@@ -6,7 +6,7 @@
 #include "chromatic_adaptation/color_correction.h"
 #include "image_hash/ahash_result.h"
 #include "image_hash/average_hash.h"
-#include "util/compiler_constants.h"
+#include "support/os/compiler_constants.h"
 #include <opencv2/opencv.hpp>
 #include <cstdint>
 #include <string>

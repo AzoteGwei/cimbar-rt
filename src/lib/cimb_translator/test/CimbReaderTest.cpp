@@ -5,7 +5,7 @@
 #include "CimbReader.h"
 
 #include "cimb_translator/CimbDecoder.h"
-#include "serialize/format.h"
+#include "support/text/format.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
@@ -32,7 +32,7 @@ namespace {
 		}
 	};
 }
-#include "serialize/str_join.h"
+#include "support/text/str_join.h"
 
 TEST_CASE( "CimbReaderTest/testReadOnce", "[unit]" )
 {
