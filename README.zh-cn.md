@@ -1,7 +1,11 @@
-### [简介](https://github.com/sz3/cimbar) | [关于](https://github.com/sz3/cimbar/blob/master/ABOUT.md) | [CFC](https://github.com/sz3/cfc) | LIBCIMBAR
-### [详细内容](DETAILS.md) | [演示](PERFORMANCE.md) | [下一步](TODO.md)
+## cimbar-rt: 彩色图形矩阵条形码
 
-## libcimbar: 彩色图形矩阵条形码
+> [!NOTE]
+> 这仅是 [sz3/libcimbar][origin] 的一个分支.
+>
+> 请注意，本项目不可作为 [`libcimbar`][origin] 的替代.
+> 
+> 本项目不稳定，或可发生大量的重大变更。
 
 一种用于小型数据传输的实验性条形码。
 
@@ -151,3 +155,5 @@ echo outputprefix*.png | ./cimbar -o /tmp
 ## 想了解更多？
 
 ### [cimbar](https://github.com/sz3/cimbar) | [关于](https://github.com/sz3/cimbar/blob/master/ABOUT.md)
+
+[origin]: https://github.com/sz3/libcimbar

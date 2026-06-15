@@ -1,7 +1,11 @@
-### [INTRODUCTION](https://github.com/sz3/cimbar) | [ABOUT](https://github.com/sz3/cimbar/blob/master/ABOUT.md) | [CFC](https://github.com/sz3/cfc) | LIBCIMBAR
-### [DETAILS](DETAILS.md) | [PERFORMANCE](PERFORMANCE.md) | [TODO](TODO.md)
+## cimbar-rt: Color Icon Matrix Barcodes
 
-## libcimbar: Color Icon Matrix Barcodes
+> [!NOTE]
+> This is a fork of [sz3/libcimbar][origin].
+>
+> Please notice that this repo CANNOT be a replacement of [`libcimbar`][origin].
+> 
+> This repo is not stable, breaking changes could be happened very often.
 
 Behold: an experimental barcode format for air-gapped data transfer.
 
@@ -158,3 +162,5 @@ You can also encode a file using [cimbar.org](https://cimbar.org), or the latest
 ## Would you like to know more?
 
 ### [INTRODUCTION](https://github.com/sz3/cimbar) | [ABOUT](https://github.com/sz3/cimbar/blob/master/ABOUT.md)
+
+[origin]: https://github.com/sz3/libcimbar
