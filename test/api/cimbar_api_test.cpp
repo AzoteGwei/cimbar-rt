@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+// Test zstd directly
+#include "core/compression/zstd_compressor.h"
+#include "core/compression/zstd_decompressor.h"
+
 namespace {
 	std::string random_string(unsigned len)
 	{
@@ -30,6 +34,67 @@ namespace {
 		(void)ctx;
 		free(ptr);
 	}
+}
+
+
+TEST_CASE( "cimbar_api_test/testZstdDirect", "[unit]" )
+{
+	// Verify zstd compression/decompression with 20KB random data
+	const int DATA_SIZE = 20000;
+	std::string data = random_string(DATA_SIZE);
+
+	cimbar::zstd_compressor<std::stringstream> comp;
+	comp.set_compression_level(16);
+	comp.write(data.data(), data.size());
+
+	size_t compressed_size = comp.size();
+	std::cerr << "zstd direct: " << DATA_SIZE << " -> " << compressed_size << std::endl;
+	REQUIRE(compressed_size > 0);
+
+	// Decompress
+	cimbar::zstd_decompressor<std::stringstream> decomp;
+	std::string comp_data = comp.str();
+	decomp.init_decompress(comp_data.data(), comp_data.size());
+
+	decomp.str(std::string());
+	int writes = 0;
+	while (decomp.write_once()) {
+		++writes;
+	}
+
+	std::string result = decomp.str();
+	std::cerr << "zstd decompress: " << result.size() << " bytes (" << writes << " write_once calls)" << std::endl;
+	REQUIRE(result.size() == (size_t)DATA_SIZE);
+	REQUIRE(result == data);
+}
+
+TEST_CASE( "cimbar_api_test/testZstdWithFilename", "[unit]" )
+{
+	const int DATA_SIZE = 20000;
+	std::string data = random_string(DATA_SIZE);
+
+	cimbar::zstd_compressor<std::stringstream> comp;
+	comp.set_compression_level(16);
+	comp.write_header("test.bin", 8);
+	comp.write(data.data(), data.size());
+
+	size_t compressed_size = comp.size();
+	std::cerr << "zstd w/ filename: " << DATA_SIZE << " -> " << compressed_size << std::endl;
+
+	cimbar::zstd_decompressor<std::stringstream> decomp;
+	std::string comp_data = comp.str();
+	decomp.init_decompress(comp_data.data(), comp_data.size());
+
+	decomp.str(std::string());
+	int writes = 0;
+	while (decomp.write_once()) {
+		++writes;
+	}
+
+	std::string result = decomp.str();
+	std::cerr << "zstd decompress: " << result.size() << " bytes (" << writes << " calls)" << std::endl;
+	REQUIRE(result.size() == (size_t)DATA_SIZE);
+	REQUIRE(result == data);
 }
 
 
@@ -87,7 +152,7 @@ TEST_CASE( "cimbar_api_test/testFountainRoundtrip", "[unit]" )
 	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
 	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
 
-	// Set input data
+	// Set input data (use size that reliably passes; larger data may hit wirehair limits)
 	const int DATA_SIZE = 10000;
 	std::string data = random_string(DATA_SIZE);
 
@@ -132,18 +197,9 @@ TEST_CASE( "cimbar_api_test/testFountainRoundtrip", "[unit]" )
 	ret = cimbar_decoder_fountain_read(dec, result.data(), &out_len);
 	REQUIRE(ret >= 0);
 
-	// Verify content matches
-	std::cerr << "decoded size=" << out_len << " expected=" << data.size() << std::endl;
-	if (out_len != data.size()) {
-		std::cerr << "SIZE MISMATCH" << std::endl;
-	}
-	if (out_len > 0 && data.size() > 0) {
-		int match_count = 0;
-		for (size_t i = 0; i < std::min(out_len, data.size()); ++i)
-			if (result[i] == (uint8_t)data[i]) match_count++;
-		std::cerr << "first bytes match: " << match_count << "/" << std::min(out_len, data.size()) << std::endl;
-	}
+	std::cerr << "file_size=" << file_size << " decompressed=" << out_len << " expected=" << data.size() << std::endl;
 
+	// Verify content matches
 	std::string decoded(reinterpret_cast<char*>(result.data()), out_len);
 	REQUIRE(decoded == data);
 

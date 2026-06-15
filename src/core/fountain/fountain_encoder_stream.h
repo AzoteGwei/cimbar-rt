@@ -78,11 +78,18 @@ public:
 	void encode_new_block()
 	{
 		unsigned char* data = _buffer.data() + _headerSize;
-		size_t res = _encoder.encode(_block++, data, block_size());
-		if (res != block_size())
-			_encoder.encode(_block++, data, block_size()); // try twice -- the last initial block will be the wrong size
+		size_t res = _encoder.encode(_block, data, block_size());
+		// On error (res == 0), try the next block id (wirehair may have issues
+		// with certain block IDs on the initial round).
+		// Partial last block (res < block_size && res > 0) is valid — keep it.
+		if (res == 0)
+		{
+			++_block;
+			_encoder.encode(_block, data, block_size());
+		}
+		unsigned block = _block;
+		++_block;
 
-		unsigned block = _block - 1; // we already incremented it above
 		// write header
 		FountainMetadata::to_uint8_arr(_encodeId, _data.size(), block, _buffer.data());
 		_buffIndex = 0;

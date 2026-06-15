@@ -32,7 +32,7 @@ TEST_CASE( "FountainStreamTest/testEncoder", "[unit]" )
 		assertEquals( res, buff.size() );
 	}
 
-	assertEquals( 170, fes->block_count() );
+	assertEquals( 169, fes->block_count() );
 	assertEquals( 13, fes->blocks_required() );
 	assertTrue( fes->good() );
 }
@@ -65,13 +65,10 @@ TEST_CASE( "FountainStreamTest/testEncoder_BlockHeader", "[unit]" )
 
 		// block_id
 		assertEquals( 0, buff[4] );
-		if (i+1 >= fes->blocks_required())
-			assertEquals( i+1, (unsigned)buff[5] );
-		else
-			assertEquals( i, (unsigned)buff[5] );
+		assertEquals( i, (unsigned)buff[5] );
 	}
 
-	assertEquals( 21, fes->block_count() );
+	assertEquals( 20, fes->block_count() );
 	assertEquals( 16, fes->blocks_required() );
 	assertTrue( fes->good() );
 }
@@ -108,8 +105,8 @@ TEST_CASE( "FountainStreamTest/testEncoder_DifferentBuffSizes", "[unit]" )
 
 	assertEquals( full.str(), oneforty.str() );
 
-	assertEquals( 15, fes1->block_count() );
-	assertEquals( 15, fes2->block_count() );
+	assertEquals( 14, fes1->block_count() );
+	assertEquals( 14, fes2->block_count() );
 }
 
 
@@ -159,7 +156,7 @@ TEST_CASE( "FountainStreamTest/testEncoder_ChangeBufferSize", "[unit]" )
 		assertEquals( res, buff.size() );
 	}
 
-	assertEquals( 235, fes->block_count() );
+	assertEquals( 234, fes->block_count() );
 	assertEquals( 17, fes->blocks_required() );
 	assertTrue( fes->good() );
 }
@@ -223,7 +220,7 @@ TEST_CASE( "FountainStreamTest/testDecode", "[unit]" )
 	assertEquals( fes->blocks_required(), fds.blocks_required() );
 	assertEquals( fes->blocks_required(), fds.progress() );
 
-	assertEquals( 15, fes->block_count() );
+	assertEquals( 14, fes->block_count() );
 	assertEquals( 13, fes->blocks_required() );
 	assertTrue( fes->good() );
 }
@@ -265,7 +262,7 @@ TEST_CASE( "FountainStreamTest/testDecode_BigPackets", "[unit]" )
 	assertEquals( 10000, fds.data_size() );
 	assertTrue( fds.good() );
 
-	assertEquals( 14, fes->block_count() );
+	assertEquals( 13, fes->block_count() );
 	assertEquals( 13, fes->blocks_required() );
 	assertTrue( fes->good() );
 

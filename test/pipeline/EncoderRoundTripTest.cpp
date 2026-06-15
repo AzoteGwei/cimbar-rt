@@ -32,7 +32,7 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.Pad", "[unit]" )
 	EncoderPlus enc(4, 2);
 	assertEquals( 1, enc.encode_fountain(inputFile, outPrefix) );
 
-	uint64_t hash = 0xefcc8800efcea808;
+	uint64_t hash = 0xeecc8800efcea808;
 	std::string path = fmt::format("{}_0.png", outPrefix);
 	cv::Mat encodedImg = cv::imread(path);
 	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
@@ -83,7 +83,7 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.SinkMismatch", "[unit]" )
 	EncoderPlus enc(4, 2);
 	assertEquals( 1, enc.encode_fountain(inputFile, outPrefix) );
 
-	uint64_t hash = 0xaecc8800efce8c28;
+	uint64_t hash = 0xae4c8c00efce9c28;
 	std::string path = fmt::format("{}_0.png", outPrefix);
 	cv::Mat encodedImg = cv::imread(path);
 	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
