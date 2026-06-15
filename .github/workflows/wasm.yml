@@ -45,7 +45,7 @@ jobs:
       - name: Cache OpenCV WASM build
         uses: actions/cache@v4
         with:
-          path: opencv4/opencv-build-wasm
+          path: ${{ github.workspace }}/opencv4/opencv-build-wasm
           key: opencv-wasm-ocv4.11.0-emsdk3.1.69
 
       - name: Get npm deps
