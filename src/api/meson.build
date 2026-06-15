@@ -66,21 +66,32 @@ if is_wasm
     install: true,
   )
 else
+  # Public C API header path
+  pub_inc = include_directories('../../include')
+
   # Native static library
   api_sources = files(
     'cimbar_js.cpp', 'cimbar_js.h',
     'cimbar_recv_js.cpp', 'cimbar_recv_js.h',
+    'cimbar_api.cc',
   )
 
   api_lib = static_library('cimbar_js',
     api_sources,
     pic: true,
-    include_directories: [src_inc, third_party_inc],
+    include_directories: [src_inc, third_party_inc, pub_inc],
     dependencies: api_deps + [glfw_dep, gl_dep],
   )
 
   api_dep = declare_dependency(
     link_with: api_lib,
-    include_directories: [src_inc, third_party_inc],
+    include_directories: [src_inc, third_party_inc, pub_inc],
+  )
+
+  # Install public headers
+  install_headers(
+    '../../include/libcimbar/cimbar.h',
+    '../../include/libcimbar/cimbar_export.h',
+    subdir: 'libcimbar',
   )
 endif
