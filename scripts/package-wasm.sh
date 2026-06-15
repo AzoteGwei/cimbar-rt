@@ -23,7 +23,7 @@ fi
 # --- WASM build ---
 cd $CIMBAR_ROOT
 meson setup build-wasm \
-  --cross-file config/wasm-cross.ini \
+  --cross-file config/wasm-ccache.ini \
   --prefix $CIMBAR_ROOT/dist \
   -Dwasm=1 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4
@@ -40,7 +40,7 @@ fi
 # --- asmjs build ---
 cd $CIMBAR_ROOT
 meson setup build-asmjs \
-  --cross-file config/wasm-cross.ini \
+  --cross-file config/wasm-ccache.ini \
   --prefix $CIMBAR_ROOT/dist \
   -Dwasm=2 \
   -Dopencv_dir=$CIMBAR_ROOT/opencv4

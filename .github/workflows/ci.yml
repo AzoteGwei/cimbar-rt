@@ -48,7 +48,9 @@ jobs:
       run: sudo apt-get update && sudo apt-get install ccache libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
 
     - name: Configure ccache
-      run: ccache --max-size=500M
+      run: |
+        ccache --max-size=500M
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
 
     - name: Configure Meson
       run: ${{ matrix.config.env }} meson setup build --prefix ${{ github.workspace }}/dist
