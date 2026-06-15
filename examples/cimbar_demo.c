@@ -2,11 +2,11 @@
 /*
  * cimbar-c-demo — minimal example of the libcimbar C API.
  *
- * Build:
- *   gcc -o cimbar-demo cimbar_demo.c -lcimbar_js -lstdc++ \
- *       `pkg-config --cflags --libs opencv4` -lzstd -lwirehair -lfmt
+ * Build (in-tree):
+ *   BUILD_DIR=../build ./build-demo.sh
  *
- * Or with scripts/build-demo.sh.
+ * Build (installed):
+ *   ./build-demo.sh
  */
 #include <libcimbar/cimbar.h>
 
@@ -29,7 +29,8 @@ static void tracking_free(void* ctx, void* ptr)
 	free(ptr);
 }
 
-static const cimbar_allocator_t s_alloc = {tracking_alloc, tracking_free, NULL};
+static size_t s_alloc_total = 0;
+static const cimbar_allocator_t s_alloc = {tracking_alloc, tracking_free, &s_alloc_total};
 
 /* ------------------------------------------------------------------ */
 /*  Encode & decode a file with fountain code (multi-frame)           */
@@ -73,16 +74,17 @@ static int encode_decode(const char* input_path)
 	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
 
 	/* ---- encode frames & feed to fountain decoder ---- */
-	unsigned char rgba[2048 * 2048 * 4];
+	unsigned char* rgba = malloc(2048 * 2048 * 4);
+	if (!rgba) { fprintf(stderr, "malloc failed\n"); return -1; }
 	int frames = 0;
 	while (frames < 500)
 	{
 		unsigned w = 0, h = 0;
-		ret = cimbar_encoder_encode_next(enc, rgba, sizeof(rgba), &w, &h);
+		ret = cimbar_encoder_encode_next(enc, rgba, 2048 * 2048 * 4, &w, &h);
 		if (ret <= 0) break;          // STREAM_END
 		frames++;
 
-		ret = cimbar_decoder_fountain_feed(dec, rgba, sizeof(rgba),
+		ret = cimbar_decoder_fountain_feed(dec, rgba, 2048 * 2048 * 4,
 		                                   w, h, CIMBAR_IMAGE_RGBA);
 		if (ret < 0) break;
 
@@ -119,6 +121,7 @@ static int encode_decode(const char* input_path)
 	/* ---- cleanup ---- */
 	cimbar_encoder_destroy(enc);
 	cimbar_decoder_destroy(dec);
+	free(rgba);
 	free(input);
 	free(output);
 	return ok ? 0 : -1;
@@ -135,17 +138,19 @@ static int scan_file(const char* image_path)
 	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
 
 	/* load image and extract cells */
-	unsigned char rgba[2048 * 2048 * 4];
+	unsigned char* rgba = malloc(2048 * 2048 * 4);
+	if (!rgba) { fprintf(stderr, "malloc failed\n"); return -1; }
 	unsigned w = 0, h = 0;
-	int ret = cimbar_image_load(image_path, rgba, sizeof(rgba), &w, &h);
-	if (ret < 0) { fprintf(stderr, "image_load failed: %d\n", ret); return -1; }
+	int ret = cimbar_image_load(image_path, rgba, 2048 * 2048 * 4, &w, &h);
+	if (ret < 0) { fprintf(stderr, "image_load failed: %d\n", ret); free(rgba); return -1; }
 
 	printf("image: %ux%u\n", w, h);
 
 	/* extract raw cells (bypass full decode) */
-	cimbar_cell_t cells[20000];
+	cimbar_cell_t* cells = malloc(20000 * sizeof(cimbar_cell_t));
+	if (!cells) { fprintf(stderr, "malloc failed\n"); free(rgba); return -1; }
 	unsigned num_cells = 0;
-	ret = cimbar_extract_cells(rgba, sizeof(rgba), w, h, CIMBAR_IMAGE_RGBA,
+	ret = cimbar_extract_cells(rgba, 2048 * 2048 * 4, w, h, CIMBAR_IMAGE_RGBA,
 	                           cells, 20000, &num_cells);
 	if (ret < 0)
 	{
@@ -164,6 +169,8 @@ static int scan_file(const char* image_path)
 	printf("scanned: %zu bytes\n", out_len);
 
 	cimbar_decoder_destroy(dec);
+	free(rgba);
+	free(cells);
 	free(output);
 	return 0;
 }

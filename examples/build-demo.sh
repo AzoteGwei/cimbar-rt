@@ -1,21 +1,44 @@
 #!/bin/sh
-# Build the C API demo against the installed library.
-# Requires meson install to have run, or be in-tree.
+# Build cimbar_demo against either an installed libcimbar or a local build tree.
+#
+# Installed (default -- requires meson install):
+#   ./build-demo.sh
+#
+# In-tree (point BUILD_DIR at a meson build directory):
+#   BUILD_DIR=../build ./build-demo.sh
+#
+# Cross-compile (override CC, CFLAGS, LDFLAGS):
+#   CC=aarch64-linux-gnu-gcc ./build-demo.sh
 set -e
 
-DEMO="$(dirname "$0")/cimbar_demo.c"
-BUILD="${BUILD_DIR:-build}"
+DEMO_SRC="$(dirname "$0")/cimbar_demo.c"
+BUILD="${BUILD_DIR:-}"
 
-# in-tree lib paths
-CIMBAR_INC="-I$(dirname "$0")/../include"
-CIMBAR_LIB="-L$(dirname "$0")/../$BUILD/src/api"
-CIMBAR_LIBS="-lcimbar_js -lzstd -lwirehair -lfmt -lpopcnt"
+if [ -n "$BUILD" ]; then
+	# ----- in-tree build (static libs from meson build tree) -----
+	CIMBAR_INC="-I$(dirname "$0")/../include"
+	CIMBAR_LIB="-L$BUILD/src/api -L$BUILD/src/core -L$BUILD/src/imgproc -L$BUILD/3rdparty"
+	# Order matters for static linking:
+	CIMBAR_LIBS="-lcimbar_js -lcimb_translator -lextractor -lwirehair -lzstd -lcorrect_static"
 
-PKGS="opencv4 glfw3 gl"
+	PKGS="opencv4 glfw3 gl"
+	CFLAGS="-Wall -Wextra -std=c11 -g -O2 $CIMBAR_INC $(pkg-config --cflags $PKGS)"
+	LDFLAGS="$CIMBAR_LIB $CIMBAR_LIBS $(pkg-config --libs $PKGS) -lstdc++ -lm"
 
-CFLAGS="-Wall -Wextra -std=c11 -g -O2"
-LDFLAGS="$CIMBAR_LIB $CIMBAR_LIBS $(pkg-config --libs $PKGS) -lstdc++"
+	echo "++ gcc $CFLAGS $DEMO_SRC $LDFLAGS -o cimbar-demo"
+	gcc $CFLAGS $DEMO_SRC $LDFLAGS -o cimbar-demo
+else
+	# ----- installed build (assumes meson install to /usr/local) -----
+	PREFIX="${CIMBAR_PREFIX:-/usr/local}"
+	CIMBAR_INC="-I$PREFIX/include"
+	CIMBAR_LIB="-L$PREFIX/lib"
 
-echo "++ gcc $CFLAGS $CIMBAR_INC $DEMO $LDFLAGS -o cimbar-demo"
-gcc $CFLAGS $CIMBAR_INC $DEMO $LDFLAGS -o cimbar-demo
+	PKGS="opencv4 glfw3 gl"
+	CFLAGS="-Wall -Wextra -std=c11 -g -O2 $CIMBAR_INC $(pkg-config --cflags $PKGS)"
+	LDFLAGS="$CIMBAR_LIB $(pkg-config --libs $PKGS) -lcimbar_js -lcimb_translator -lextractor -lwirehair -lzstd -lcorrect_static -lstdc++ -lm"
+
+	echo "++ gcc $CFLAGS $DEMO_SRC $LDFLAGS -o cimbar-demo"
+	gcc $CFLAGS $DEMO_SRC $LDFLAGS -o cimbar-demo
+fi
+
 echo "++ done: ./cimbar-demo"
