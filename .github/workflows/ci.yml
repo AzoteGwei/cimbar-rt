@@ -12,19 +12,20 @@ jobs:
         config:
         - name: "linux gcc11"
           os: ubuntu-22.04
-          env: CXX="g++-11" CC="gcc-11"
+          env: CC="ccache gcc-11" CXX="ccache g++-11"
 
         - name: "linux gcc-latest"
           os: ubuntu-latest
+          env: CC="ccache gcc" CXX="ccache g++"
 
         - name: "linux clang14"
           os: ubuntu-22.04
-          env: CXX="clang++" CC="clang"
+          env: CC="ccache clang" CXX="ccache clang++"
           extra-packages: "clang"
 
         - name: "linux clang-latest"
           os: ubuntu-latest
-          env: CXX="clang++" CC="clang"
+          env: CC="ccache clang" CXX="ccache clang++"
           extra-packages: "clang"
 
     steps:
@@ -48,9 +49,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install ccache libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
 
     - name: Configure ccache
-      run: |
-        ccache --max-size=500M
-        echo "/usr/lib/ccache" >> $GITHUB_PATH
+      run: ccache --max-size=500M
 
     - name: Configure Meson
       run: ${{ matrix.config.env }} meson setup build --prefix ${{ github.workspace }}/dist
