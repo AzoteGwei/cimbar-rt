@@ -1,4 +1,12 @@
 /*
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+/*
  *  Catch v2.13.8
  *  Generated: 2022-01-03 21:20:09.589503
  *  ----------------------------------------------------------

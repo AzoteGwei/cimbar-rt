@@ -1,3 +1,11 @@
+/*
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
 namespace cimbar {
 static const std::map<std::string, std::string> bitmaps = {
 {"bitmap/2/00.png", R"(vuk:eJs4+BAAN/-MCG4DAADHAABtZLYAAANJTkaoAA6y#TzjGFAA$FDAqCsCco~EbAAA'yCG@v_CLK;IA'B'1'1(-o5}s%9~(gEzXCg/0(KC{QC'0;XE/9/#iBAAC'nHpwZ9)'&F)"},
