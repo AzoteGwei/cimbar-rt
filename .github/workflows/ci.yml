@@ -40,9 +40,8 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.ccache
-        key: ccache-${{ matrix.config.os }}-${{ matrix.config.name }}-${{ hashFiles('meson.build', 'meson_options.txt', 'src/**/*.cpp', 'src/**/*.h', 'src/**/*.hpp') }}
+        key: ccache-${{ matrix.config.os }}-${{ matrix.config.name }}
         restore-keys: |
-          ccache-${{ matrix.config.os }}-${{ matrix.config.name }}-
           ccache-${{ matrix.config.os }}-
 
     - name: Install dependencies

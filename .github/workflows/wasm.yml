@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-wasm-${{ hashFiles('meson.build', 'meson_options.txt', 'src/**/*.cpp', 'src/**/*.h', 'src/**/*.hpp', 'config/wasm-cross.ini') }}
+          key: ccache-wasm
           restore-keys: |
             ccache-wasm-
 
