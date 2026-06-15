@@ -10,14 +10,14 @@ apt install python3 python3-pip ninja-build ccache -y
 
 pip3 install meson
 
-if [ ! -f opencv4/opencv-build-wasm/build_wasm/lib/libopencv_core.a ]; then
+if ls opencv4/opencv-build-wasm/build_wasm/lib/*.a >/dev/null 2>&1; then
+    echo "OpenCV WASM build artifacts found, skipping OpenCV build..."
+else
     cd opencv4/
     mkdir -p opencv-build-wasm
     cd opencv-build-wasm
     python3 ../platforms/js/build_js.py build_wasm --emscripten_dir=/emsdk/upstream/emscripten
     cd $CIMBAR_ROOT
-else
-    echo "OpenCV WASM build artifacts found, skipping OpenCV build..."
 fi
 
 # --- WASM build ---
