@@ -10,8 +10,16 @@
 #include "core/fountain/fountain_encoder_stream.h"
 
 #include <opencv2/opencv.hpp>
+#include <cstdint>
 #include <optional>
 #include <string>
+
+#ifndef CIMBAR_H
+struct cimbar_cell {
+	uint8_t symbol;
+	uint8_t color;
+};
+#endif
 
 class Encoder
 {
@@ -21,7 +29,8 @@ public:
 	void set_color_mode(unsigned color_mode);
 
 	template <typename STREAM>
-	std::optional<cv::Mat> encode_next(STREAM& stream, cimbar::vec_xy canvas_size={});
+	std::optional<cv::Mat> encode_next(STREAM& stream, cimbar::vec_xy canvas_size={},
+	                                  cimbar_cell* cells_out=nullptr, unsigned* num_cells=nullptr);
 
 	template <typename STREAM>
 	fountain_encoder_stream::ptr create_fountain_encoder(STREAM& stream, const std::string_view& filename, int compression_level=16);
@@ -66,7 +75,8 @@ inline void Encoder::set_color_mode(unsigned color_mode)
 }
 
 template <typename STREAM>
-inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_xy canvas_size)
+inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_xy canvas_size,
+                                                   cimbar_cell* cells_out, unsigned* num_cells)
 {
 	if (_coupled)
 		return encode_next_coupled(stream, canvas_size);
@@ -75,9 +85,7 @@ inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_x
 		return std::nullopt;
 
 	unsigned bits_per_op = _bitsPerColor + _bitsPerSymbol;
-	CimbWriter writer(_bitsPerSymbol, _bitsPerColor, _dark, _colorMode, canvas_size);
-
-	unsigned numCells = writer.num_cells();
+	unsigned numCells = cimbar::Config::total_cells();
 	bitbuffer bb(cimbar::Config::capacity(bits_per_op));
 
 	unsigned bitPos = 0;
@@ -117,7 +125,23 @@ inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_x
 		}
 	}
 
+	if (cells_out)
+	{
+		unsigned max = num_cells ? *num_cells : ~0u;
+		unsigned count = 0;
+		for (bitPos = 0; bitPos < endBitPos && count < max; bitPos += bits_per_op)
+		{
+			unsigned combined = bb.read(bitPos, bits_per_op);
+			cells_out[count].symbol = combined & ((1u << _bitsPerSymbol) - 1);
+			cells_out[count].color = combined >> _bitsPerSymbol;
+			++count;
+		}
+		if (num_cells) *num_cells = count;
+		return std::nullopt;
+	}
+
 	// dump whatever we have to image
+	CimbWriter writer(_bitsPerSymbol, _bitsPerColor, _dark, _colorMode, canvas_size);
 	for (bitPos = 0; bitPos < endBitPos; bitPos+=bits_per_op)
 	{
 		unsigned bits = bb.read(bitPos, bits_per_op);

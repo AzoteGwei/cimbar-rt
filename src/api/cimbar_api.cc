@@ -429,20 +429,28 @@ int cimbar_encoder_encode_next(cimbar_encoder_t* enc, uint8_t* rgba, size_t buf_
 int cimbar_encoder_encode_next_cells(cimbar_encoder_t* enc, cimbar_cell_t* cells, size_t max_cells, unsigned* num_cells)
 {
 	if (!enc || !cells) return CIMBAR_ERR_BAD_PARAM;
+	if (!enc->input_set || !enc->fes)
+		return CIMBAR_ERR_NO_DATA;
 
-	// For v1: encode the frame as RGBA, then extract cells back
-	// This is not optimal but produces correct cell data.
-	// TODO: direct cell output path
-	unsigned w = 0, h = 0;
-	unsigned img_x = cimbar::Config::image_size_x();
-	unsigned img_y = cimbar::Config::image_size_y();
-	std::vector<uint8_t> rgba_temp((size_t)img_x * img_y * 4);
-	int ret = cimbar_encoder_encode_next(enc, rgba_temp.data(), rgba_temp.size(), &w, &h);
-	if (ret < 0)
-		return ret;
+	int max_wraps = 100;
+	while (max_wraps-- > 0)
+	{
+		Encoder enc_cpp;
+		enc_cpp.set_encode_id(enc->encode_id);
 
-	cv::Mat frame_rgb = raw_to_mat(rgba_temp.data(), w, h, CIMBAR_IMAGE_RGBA);
-	return extract_cells_from_image(frame_rgb, cells, max_cells, num_cells);
+		unsigned captured = max_cells;
+		auto frame = enc_cpp.encode_next(*enc->fes, {}, cells, &captured);
+		if (captured > 0)
+		{
+			++enc->frames_generated;
+			if (num_cells) *num_cells = captured;
+			return (int)captured;
+		}
+
+		enc->fes->restart();
+	}
+
+	return CIMBAR_ERR_STREAM_END;
 }
 
 int cimbar_encoder_reset(cimbar_encoder_t* enc)
@@ -678,7 +686,8 @@ int cimbar_decoder_decode_cells(cimbar_decoder_t* dec, const cimbar_cell_t* cell
 
 	for (size_t i = 0; i < num_cells; ++i)
 	{
-		unsigned combined = ((unsigned)cells[i].symbol << cimbar::Config::color_bits()) | cells[i].color;
+		// CimbEncoder expects (color << symbol_bits) | symbol as tile index
+		unsigned combined = ((unsigned)cells[i].color << cimbar::Config::symbol_bits()) | cells[i].symbol;
 		cw.write(combined);
 	}
 
@@ -804,7 +813,8 @@ int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* dec, const cimbar_cell_
 	CimbWriter cw(cimbar::Config::symbol_bits(), cimbar::Config::color_bits(), cimbar::Config::dark(), cimbar::Config::color_mode());
 	for (size_t i = 0; i < num_cells && !cw.done(); ++i)
 	{
-		unsigned combined = ((unsigned)cells[i].symbol << cimbar::Config::color_bits()) | cells[i].color;
+		// CimbEncoder expects (color << symbol_bits) | symbol as tile index
+		unsigned combined = ((unsigned)cells[i].color << cimbar::Config::symbol_bits()) | cells[i].symbol;
 		cw.write(combined);
 	}
 
@@ -972,7 +982,8 @@ int cimbar_render(const cimbar_cell_t* cells, size_t num_cells,
 	CimbWriter cw(cimbar::Config::symbol_bits(), cimbar::Config::color_bits(), cimbar::Config::dark(), cimbar::Config::color_mode());
 	for (size_t i = 0; i < num_cells && !cw.done(); ++i)
 	{
-		unsigned combined = ((unsigned)cells[i].symbol << cimbar::Config::color_bits()) | cells[i].color;
+		// CimbEncoder expects (color << symbol_bits) | symbol as tile index
+		unsigned combined = ((unsigned)cells[i].color << cimbar::Config::symbol_bits()) | cells[i].symbol;
 		cw.write(combined);
 	}
 

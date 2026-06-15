@@ -244,9 +244,8 @@ TEST_CASE( "cimbar_api_test/testNullSafety", "[unit]" )
 
 TEST_CASE( "cimbar_api_test/testCellConsistency", "[unit]" )
 {
-	// Verify cell extraction + re-rendering preserves image structure.
-	// Note: cell extraction via CimbReader is lossy (thresholding, color classification).
-	// We verify the anchor region is correct and overall structure is preserved.
+	// Verify encode_next_cells produces valid cells with correct ranges.
+	// Cells are captured directly from the fountain bitbuffer (no rendering).
 	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
 	REQUIRE(enc != nullptr);
 
@@ -256,49 +255,20 @@ TEST_CASE( "cimbar_api_test/testCellConsistency", "[unit]" )
 	int ret = cimbar_encoder_set_input(enc, data.data(), data.size(), "test.bin");
 	REQUIRE(ret == CIMBAR_OK);
 
-	std::vector<uint8_t> rgba(2048 * 2048 * 4);
-	unsigned w = 0, h = 0;
-	ret = cimbar_encoder_encode_next(enc, rgba.data(), rgba.size(), &w, &h);
-	REQUIRE(ret > 0);
-
-	cv::Mat original_rgb = cv::Mat(h, w, CV_8UC4, rgba.data()).clone();
-	cv::cvtColor(original_rgb, original_rgb, cv::COLOR_RGBA2RGB);
-
-	std::vector<cimbar_cell_t> cells(100000);
+	std::vector<cimbar_cell_t> cells(cimbar::Config::total_cells());
 	unsigned num_cells = 0;
 	ret = cimbar_encoder_encode_next_cells(enc, cells.data(), cells.size(), &num_cells);
 	REQUIRE(ret > 0);
-	REQUIRE(num_cells > 0);
+	REQUIRE(num_cells == cimbar::Config::total_cells());
 
-	unsigned sym_bits = cimbar::Config::symbol_bits();
-	unsigned col_bits = cimbar::Config::color_bits();
-	bool dark = cimbar::Config::dark();
-	unsigned color_mode = cimbar::Config::color_mode();
+	unsigned max_symbol = (1u << cimbar::Config::symbol_bits()) - 1;
+	unsigned max_color = (1u << cimbar::Config::color_bits()) - 1;
 
-	CimbWriter cw(sym_bits, col_bits, dark, color_mode);
-	for (size_t i = 0; i < num_cells && !cw.done(); ++i)
+	for (unsigned i = 0; i < num_cells; ++i)
 	{
-		unsigned combined = ((unsigned)cells[i].symbol << col_bits) | cells[i].color;
-		cw.write(combined);
+		REQUIRE(cells[i].symbol <= max_symbol);
+		REQUIRE(cells[i].color <= max_color);
 	}
-	cv::Mat rendered_rgb;
-	cv::cvtColor(cw.image(), rendered_rgb, cv::COLOR_BGR2RGB);
-
-	REQUIRE(rendered_rgb.size() == original_rgb.size());
-	REQUIRE(rendered_rgb.type() == original_rgb.type());
-
-	cv::Mat diff, diff_gray;
-	cv::absdiff(original_rgb, rendered_rgb, diff);
-	cv::cvtColor(diff, diff_gray, cv::COLOR_RGB2GRAY);
-	double mean_diff = cv::mean(diff_gray)[0];
-
-	std::cerr << "Cell consistency: mean_diff=" << mean_diff
-	          << " size=" << rendered_rgb.cols << "x" << rendered_rgb.rows << std::endl;
-
-	// Anchor/guide regions should be identical (rows 0-9). Data tiles have
-	// thresholding errors, so overall diff reflects lossy cell extraction.
-	// Verify structure is preserved: mean_diff should be well below random noise.
-	REQUIRE(mean_diff < 128);
 
 	cimbar_encoder_destroy(enc);
 }
@@ -306,9 +276,7 @@ TEST_CASE( "cimbar_api_test/testCellConsistency", "[unit]" )
 
 TEST_CASE( "cimbar_api_test/testCellRoundtrip", "[unit]" )
 {
-	// Smoke test: verify encode_next_cells + fountain_feed_cells API.
-	// Full roundtrip is lossy due to cell extraction (CimbReader thresholding
-	// introduces bit errors that corrupt the fountain header).
+	// Full roundtrip via encode_next_cells + fountain_feed_cells
 	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
 	REQUIRE(enc != nullptr);
 	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
@@ -317,18 +285,46 @@ TEST_CASE( "cimbar_api_test/testCellRoundtrip", "[unit]" )
 	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
 	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
 
-	std::string data = random_string(100);
+	const int DATA_SIZE = 500;
+	std::string data = random_string(DATA_SIZE);
+
 	int ret = cimbar_encoder_set_input(enc, data.data(), data.size(), "test.bin");
 	REQUIRE(ret == CIMBAR_OK);
 
 	std::vector<cimbar_cell_t> cells(100000);
-	unsigned num_cells = 0;
-	ret = cimbar_encoder_encode_next_cells(enc, cells.data(), cells.size(), &num_cells);
-	REQUIRE(ret > 0);
-	REQUIRE(num_cells > 0);
+	int frame_count = 0;
+	int max_frames = 200;
 
-	ret = cimbar_decoder_fountain_feed_cells(dec, cells.data(), num_cells);
+	while (frame_count < max_frames)
+	{
+		unsigned num_cells = 0;
+		ret = cimbar_encoder_encode_next_cells(enc, cells.data(), cells.size(), &num_cells);
+		if (ret <= 0)
+			break;
+
+		frame_count++;
+
+		ret = cimbar_decoder_fountain_feed_cells(dec, cells.data(), num_cells);
+		REQUIRE(ret >= 0);
+
+		if (cimbar_decoder_fountain_is_complete(dec))
+			break;
+	}
+
+	std::cerr << "Cell roundtrip: " << frame_count << " frames, progress="
+	          << cimbar_decoder_fountain_get_progress(dec) << "%" << std::endl;
+	REQUIRE(cimbar_decoder_fountain_is_complete(dec));
+
+	size_t file_size = cimbar_decoder_fountain_get_filesize(dec);
+	REQUIRE(file_size > 0);
+
+	std::vector<uint8_t> result(file_size + 4096);
+	size_t out_len = result.size();
+	ret = cimbar_decoder_fountain_read(dec, result.data(), &out_len);
 	REQUIRE(ret >= 0);
+
+	std::string decoded(reinterpret_cast<char*>(result.data()), out_len);
+	REQUIRE(decoded == data);
 
 	cimbar_encoder_destroy(enc);
 	cimbar_decoder_destroy(dec);
