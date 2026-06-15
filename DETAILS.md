@@ -146,4 +146,167 @@ Notably, these problems can also be *localized* in an image, meaning that while 
 
 [to be continued...]
 
+---
+
+## C API (`include/libcimbar/cimbar.h`)
+
+A ZBar-style C API for encoding and decoding cimbar codes. The API is callable from any language with C FFI. Key design points:
+
+- **Opaque handles**: `cimbar_encoder_t`, `cimbar_decoder_t` — all state hidden behind pointers.
+- **Custom allocator**: Caller provides `cimbar_allocator_t` to control all library-own allocations.
+- **Caller-owned buffers**: All output buffers (image pixels, decoded data, cell grids) are supplied by the caller; the library never allocates large buffers internally.
+- **Two decode paths**: Raw image → data (full pipeline), or pre-extracted cell grid → data (codec-only).
+
+### Quick start — encode and decode a file
+
+```c
+#include <libcimbar/cimbar.h>
+
+/* create encoder/decoder */
+cimbar_encoder_t* enc = cimbar_encoder_create(NULL);   /* NULL = malloc/free */
+cimbar_decoder_t* dec = cimbar_decoder_create(NULL);
+
+cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
+cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
+
+/* feed input data */
+cimbar_encoder_set_input(enc, data, len, "myfile.txt");
+
+/* encode frames and feed to fountain decoder */
+unsigned char rgba[2048 * 2048 * 4];
+unsigned w, h;
+while (cimbar_encoder_encode_next(enc, rgba, sizeof(rgba), &w, &h) > 0)
+{
+    cimbar_decoder_fountain_feed(dec, rgba, sizeof(rgba),
+                                 w, h, CIMBAR_IMAGE_RGBA);
+    if (cimbar_decoder_fountain_is_complete(dec))
+        break;
+}
+
+/* read back decoded data */
+size_t out_len = 1024 * 1024;
+cimbar_decoder_fountain_read(dec, output, &out_len);
+
+cimbar_encoder_destroy(enc);
+cimbar_decoder_destroy(dec);
+```
+
+### Encoder API
+
+| Function | Description |
+|----------|-------------|
+| `cimbar_encoder_create(alloc)` | Create encoder with optional custom allocator |
+| `cimbar_encoder_destroy(enc)` | Destroy encoder |
+| `cimbar_encoder_set_config(enc, key, val)` | Set configuration (preset, compression, etc.) |
+| `cimbar_encoder_get_config(enc, key, val)` | Read configuration |
+| `cimbar_encoder_set_input(enc, data, len, filename)` | Supply data to encode (with optional filename) |
+| `cimbar_encoder_set_input_file(enc, path)` | Supply data from file path |
+| `cimbar_encoder_encode_next(enc, rgba, size, &w, &h)` | Encode next frame → RGBA pixels |
+| `cimbar_encoder_encode_next_cells(enc, cells, max, &n)` | Encode next frame → cell grid |
+| `cimbar_encoder_reset(enc)` | Reset state for re-use |
+| `cimbar_encoder_get_stats(enc, &stats)` | Frame/block counts |
+| `cimbar_encoder_dump(enc, buf, len)` | Debug string |
+
+### Decoder API
+
+| Function | Description |
+|----------|-------------|
+| `cimbar_decoder_create(alloc)` | Create decoder |
+| `cimbar_decoder_destroy(dec)` | Destroy decoder |
+| `cimbar_decoder_set_config(dec, key, val)` | Set configuration |
+| `cimbar_decoder_get_config(dec, key, val)` | Read configuration |
+| `cimbar_decoder_scan(dec, img, len, w, h, fmt, out, &out_len)` | Decode raw image → data |
+| `cimbar_decoder_scan_file(dec, path, out, &out_len)` | Decode image file → data |
+| `cimbar_decoder_decode_cells(dec, cells, n, out, &out_len)` | Decode cell grid → data (skip image processing) |
+| `cimbar_decoder_fountain_feed(dec, img, len, w, h, fmt)` | Feed one frame into fountain decoder |
+| `cimbar_decoder_fountain_feed_file(dec, path)` | Feed image file into fountain decoder |
+| `cimbar_decoder_fountain_feed_cells(dec, cells, n)` | Feed cell grid into fountain decoder |
+| `cimbar_decoder_fountain_is_complete(dec)` | Check if fountain decode finished |
+| `cimbar_decoder_fountain_get_progress(dec)` | Progress 0–100 |
+| `cimbar_decoder_fountain_read(dec, buf, &len)` | Read reassembled (and decompressed) data |
+| `cimbar_decoder_fountain_get_filename(dec, buf, size)` | Get filename from reassembled data |
+| `cimbar_decoder_fountain_get_filesize(dec)` | Compressed file size |
+| `cimbar_decoder_reset(dec)` | Reset state for re-use |
+| `cimbar_decoder_dump(dec, buf, len)` | Debug string |
+
+### Standalone utilities
+
+| Function | Description |
+|----------|-------------|
+| `cimbar_image_load(path, rgba, size, &w, &h)` | Load PNG/BMP → RGBA |
+| `cimbar_extract_cells(img, len, w, h, fmt, cells, max, &n)` | Image → cell grid (no decode) |
+| `cimbar_render(cells, n, rgba, size, &w, &h)` | Cell grid → RGBA (no encode) |
+
+### Image formats for decoder input
+
+```c
+CIMBAR_IMAGE_RGB   /* 3-channel row-major    */
+CIMBAR_IMAGE_RGBA  /* 4-channel row-major    */
+CIMBAR_IMAGE_BGR   /* OpenCV-compatible      */
+CIMBAR_IMAGE_BGRA  /* OpenCV-compatible      */
+CIMBAR_IMAGE_GRAY  /* 1-channel 8-bit        */
+```
+
+### Configuration keys
+
+```c
+CIMBAR_CFG_PRESET             /* 4, 8, 66, 67, 68 */
+CIMBAR_CFG_COLOR_MODE         /* 0=legacy, 1=decoupled */
+CIMBAR_CFG_SYMBOL_BITS        /* bits per symbol */
+CIMBAR_CFG_COLOR_BITS         /* bits per color  */
+CIMBAR_CFG_ECC_BYTES          /* Reed-Solomon ECC bytes */
+CIMBAR_CFG_COMPRESSION        /* zstd compression level (0=off) */
+CIMBAR_CFG_FOUNTAIN_REDUNDANCY /* fountain redundancy % */
+CIMBAR_CFG_IMAGE_SIZE_X       /* output image width */
+CIMBAR_CFG_IMAGE_SIZE_Y       /* output image height */
+```
+
+### Error codes
+
+```c
+CIMBAR_OK            =  0
+CIMBAR_ERR_NOMEM     = -1
+CIMBAR_ERR_BAD_PARAM = -2
+CIMBAR_ERR_NO_DATA   = -3
+CIMBAR_ERR_DECODE_FAIL = -4
+CIMBAR_ERR_ENCODE_FAIL = -5
+CIMBAR_ERR_STREAM_END  = -6
+CIMBAR_ERR_INCOMPLETE  = -7
+CIMBAR_ERR_FORMAT      = -8
+CIMBAR_ERR_IO          = -9
+```
+
+### Custom allocator example
+
+```c
+static void* my_alloc(void* ctx, size_t size) {
+    return my_pool_alloc(size);
+}
+static void my_free(void* ctx, void* ptr)  {
+    my_pool_free(ptr);
+}
+cimbar_allocator_t alloc = {my_alloc, my_free, NULL};
+cimbar_encoder_t* enc = cimbar_encoder_create(&alloc);
+```
+
+### Cell grid (bypass image processing)
+
+The `cimbar_cell_t` struct represents one cell of the cimbar grid:
+
+```c
+typedef struct { uint8_t symbol; uint8_t color; } cimbar_cell_t;
+```
+
+Two usage patterns:
+
+```
+Encode:   data ──→ encode ──→ RGBA pixels        (cimbar_encoder_encode_next)
+          data ──→ encode ──→ cimbar_cell_t[]     (cimbar_encoder_encode_next_cells)
+
+Decode:   RGBA pixels ──→ scan ──→ data           (cimbar_decoder_scan)
+          cimbar_cell_t[] ──→ decode ──→ data     (cimbar_decoder_decode_cells)
+```
+
+The full sample is at `examples/cimbar_demo.c`.
+
 
