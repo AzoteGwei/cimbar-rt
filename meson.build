@@ -128,6 +128,16 @@ gl_dep = dependency('gl', required: false)
 src_inc = include_directories('src')
 third_party_inc = include_directories('3rdparty')
 
+# ==================== Fuzz mode (libFuzzer, clang only) ====================
+# Apply globally so all dependencies have coverage instrumentation.
+if get_option('fuzz')
+  if cpp.get_id() != 'clang'
+    error('fuzz targets require clang (libFuzzer)')
+  endif
+  add_project_arguments(['-fsanitize=fuzzer,address'], language: ['c', 'cpp'])
+  add_project_link_arguments(['-fsanitize=fuzzer,address'], language: ['c', 'cpp'])
+endif
+
 # ==================== Subprojects ====================
 subdir('3rdparty')
 subdir('src/support')
@@ -135,22 +145,15 @@ subdir('src/imgproc')
 subdir('src/core')
 subdir('src/pipeline')
 subdir('src/api')
-if not is_wasm
+if not is_wasm and not get_option('fuzz')
   subdir('tools')
 endif
-if not disable_tests
+if not disable_tests and not get_option('fuzz')
   subdir('test')
 endif
 
-# ==================== Fuzz targets (libFuzzer, clang only) ====================
+# ==================== Fuzz targets ====================
 if get_option('fuzz')
-  if cpp.get_id() != 'clang'
-    error('fuzz targets require clang (libFuzzer)')
-  endif
-
-  fuzz_flags = ['-fsanitize=fuzzer,address']
-  fuzz_link_flags = ['-fsanitize=fuzzer,address']
-
   fuzz_deps = [
     api_dep,
     core_codec_dep, core_compression_dep,
@@ -165,23 +168,17 @@ if get_option('fuzz')
     'fuzz/cimbar_fuzz_decode.cc',
     include_directories: [src_inc, third_party_inc],
     dependencies: fuzz_deps,
-    cpp_args: fuzz_flags,
-    link_args: fuzz_link_flags,
   )
 
   executable('cimbar_fuzz_fountain',
     'fuzz/cimbar_fuzz_fountain.cc',
     include_directories: [src_inc, third_party_inc],
     dependencies: fuzz_deps,
-    cpp_args: fuzz_flags,
-    link_args: fuzz_link_flags,
   )
 
   executable('cimbar_fuzz_encode',
     'fuzz/cimbar_fuzz_encode.cc',
     include_directories: [src_inc, third_party_inc],
     dependencies: fuzz_deps,
-    cpp_args: fuzz_flags,
-    link_args: fuzz_link_flags,
   )
 endif
