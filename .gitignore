@@ -6,3 +6,4 @@ web/cimbar_js.js
 web/cimbar_js.wasm
 callgrind.out*
 __pycache__/
+fuzz/corpus/
