@@ -75,3 +75,13 @@ jobs:
         run: |
           (cd web/test/ && node run-in-browser.js)
 
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cimbar-wasm-${{ github.sha }}
+          path: |
+            web/cimbar_js.js
+            web/cimbar_js.wasm
+            web/cimbar.wasm.tar.gz
+          retention-days: 30
+

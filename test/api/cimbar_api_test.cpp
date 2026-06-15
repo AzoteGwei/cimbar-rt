@@ -641,3 +641,198 @@ TEST_CASE( "cimbar_api_test/testDump", "[unit]" )
 	ret = cimbar_decoder_dump(nullptr, buf, sizeof(buf));
 	REQUIRE(ret < 0);
 }
+
+
+TEST_CASE( "cimbar_api_test/testEmptyInput", "[unit]" )
+{
+	// Verify encoder handles 0-byte input gracefully (no crash)
+	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
+	REQUIRE(enc != nullptr);
+
+	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
+
+	int ret = cimbar_encoder_set_input(enc, "", 0, "empty.bin");
+	REQUIRE(ret == CIMBAR_OK);
+
+	std::vector<uint8_t> rgba(2048 * 2048 * 4);
+	unsigned w = 0, h = 0;
+	ret = cimbar_encoder_encode_next(enc, rgba.data(), rgba.size(), &w, &h);
+	// Encoder produces at least one frame for padded empty data
+	REQUIRE(ret > 0);
+
+	cimbar_encoder_destroy(enc);
+}
+
+
+TEST_CASE( "cimbar_api_test/testUnicodeFilename", "[unit]" )
+{
+	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
+	REQUIRE(enc != nullptr);
+	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
+	REQUIRE(dec != nullptr);
+
+	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
+	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
+
+	std::string data = random_string(500);
+	std::string filename = "中文文件测试.bin";
+	int ret = cimbar_encoder_set_input(enc, data.data(), data.size(), filename.c_str());
+	REQUIRE(ret == CIMBAR_OK);
+
+	std::vector<uint8_t> rgba(2048 * 2048 * 4);
+	unsigned w = 0, h = 0;
+	int max_frames = 200;
+	for (int i = 0; i < max_frames; ++i)
+	{
+		ret = cimbar_encoder_encode_next(enc, rgba.data(), rgba.size(), &w, &h);
+		if (ret <= 0) break;
+		ret = cimbar_decoder_fountain_feed(dec, rgba.data(), rgba.size(), w, h, CIMBAR_IMAGE_RGBA);
+		REQUIRE(ret >= 0);
+		if (cimbar_decoder_fountain_is_complete(dec)) break;
+	}
+
+	REQUIRE(cimbar_decoder_fountain_is_complete(dec));
+
+	char name_buf[256]{};
+	int fn_len = cimbar_decoder_fountain_get_filename(dec, name_buf, sizeof(name_buf));
+	REQUIRE(fn_len > 0);
+	std::string decoded_name(name_buf, fn_len);
+	REQUIRE(decoded_name == filename);
+
+	size_t file_size = cimbar_decoder_fountain_get_filesize(dec);
+	std::vector<uint8_t> result(file_size + 4096);
+	size_t out_len = result.size();
+	ret = cimbar_decoder_fountain_read(dec, result.data(), &out_len);
+	REQUIRE(ret >= 0);
+	std::string decoded(reinterpret_cast<char*>(result.data()), out_len);
+	REQUIRE(decoded == data);
+
+	cimbar_encoder_destroy(enc);
+	cimbar_decoder_destroy(dec);
+}
+
+
+TEST_CASE( "cimbar_api_test/testFountainFeedFile", "[unit]" )
+{
+	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
+	REQUIRE(dec != nullptr);
+
+	std::string sample_path = TestCimbar::getSample("b/4cecc30f.png");
+	int ret = cimbar_decoder_fountain_feed_file(dec, sample_path.c_str());
+	REQUIRE(ret >= 0);
+
+	int progress = cimbar_decoder_fountain_get_progress(dec);
+	REQUIRE(progress > 0);
+
+	cimbar_decoder_destroy(dec);
+}
+
+
+TEST_CASE( "cimbar_api_test/testFountainFeedCells", "[unit]" )
+{
+	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
+	REQUIRE(enc != nullptr);
+	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
+	REQUIRE(dec != nullptr);
+
+	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
+	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
+
+	std::string data = random_string(500);
+	int ret = cimbar_encoder_set_input(enc, data.data(), data.size(), "test.bin");
+	REQUIRE(ret == CIMBAR_OK);
+
+	std::vector<cimbar_cell_t> cells(cimbar::Config::total_cells());
+	int frame_count = 0;
+	int max_frames = 200;
+	while (frame_count < max_frames)
+	{
+		unsigned num_cells = 0;
+		ret = cimbar_encoder_encode_next_cells(enc, cells.data(), cells.size(), &num_cells);
+		if (ret <= 0) break;
+		frame_count++;
+		ret = cimbar_decoder_fountain_feed_cells(dec, cells.data(), num_cells);
+		REQUIRE(ret >= 0);
+		if (cimbar_decoder_fountain_is_complete(dec)) break;
+	}
+
+	REQUIRE(cimbar_decoder_fountain_is_complete(dec));
+	size_t file_size = cimbar_decoder_fountain_get_filesize(dec);
+	REQUIRE(file_size > 0);
+
+	std::vector<uint8_t> result(file_size + 4096);
+	size_t out_len = result.size();
+	ret = cimbar_decoder_fountain_read(dec, result.data(), &out_len);
+	REQUIRE(ret >= 0);
+	std::string decoded(reinterpret_cast<char*>(result.data()), out_len);
+	REQUIRE(decoded == data);
+
+	cimbar_encoder_destroy(enc);
+	cimbar_decoder_destroy(dec);
+}
+
+
+TEST_CASE( "cimbar_api_test/testDecodeScanFormats", "[unit]" )
+{
+	cimbar_encoder_t* enc = cimbar_encoder_create(nullptr);
+	REQUIRE(enc != nullptr);
+	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
+	REQUIRE(dec != nullptr);
+
+	cimbar_encoder_set_config(enc, CIMBAR_CFG_PRESET, 68);
+	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
+
+	std::string data = random_string(10);
+	cimbar_encoder_set_input(enc, data.data(), data.size(), nullptr);
+
+	std::vector<uint8_t> rgba(2048 * 2048 * 4);
+	unsigned w = 0, h = 0;
+	int ret = cimbar_encoder_encode_next(enc, rgba.data(), rgba.size(), &w, &h);
+	REQUIRE(ret > 0);
+
+	cimbar_image_format_t formats[] = {
+		CIMBAR_IMAGE_RGB, CIMBAR_IMAGE_RGBA, CIMBAR_IMAGE_BGR,
+		CIMBAR_IMAGE_BGRA, CIMBAR_IMAGE_GRAY,
+	};
+
+	for (auto fmt : formats)
+	{
+		cimbar_decoder_reset(dec);
+		uint8_t output[4096]{};
+		size_t out_len = sizeof(output);
+		ret = cimbar_decoder_scan(dec, rgba.data(), rgba.size(), w, h, fmt, output, &out_len);
+		REQUIRE(ret != CIMBAR_ERR_BAD_PARAM);
+	}
+
+	cimbar_encoder_destroy(enc);
+	cimbar_decoder_destroy(dec);
+}
+
+
+TEST_CASE( "cimbar_api_test/testDecoderGetConfig", "[unit]" )
+{
+	cimbar_decoder_t* dec = cimbar_decoder_create(nullptr);
+	REQUIRE(dec != nullptr);
+
+	cimbar_decoder_set_config(dec, CIMBAR_CFG_PRESET, 68);
+
+	cimbar_config_t keys[] = {
+		CIMBAR_CFG_SYMBOL_BITS, CIMBAR_CFG_COLOR_BITS,
+		CIMBAR_CFG_ECC_BYTES, CIMBAR_CFG_ECC_BLOCK_SIZE,
+		CIMBAR_CFG_IMAGE_SIZE_X, CIMBAR_CFG_IMAGE_SIZE_Y,
+	};
+
+	for (auto key : keys)
+	{
+		int val = -1;
+		int ret = cimbar_decoder_get_config(dec, key, &val);
+		REQUIRE(ret == CIMBAR_OK);
+		REQUIRE(val > 0);
+	}
+
+	int val;
+	int ret = cimbar_decoder_get_config(dec, (cimbar_config_t)999, &val);
+	REQUIRE(ret < 0);
+
+	cimbar_decoder_destroy(dec);
+}

@@ -95,3 +95,12 @@ jobs:
     - name: Build fuzz targets
       run: ninja -C build-fuzz cimbar_fuzz_decode cimbar_fuzz_fountain cimbar_fuzz_encode
 
+    - name: Run fuzz targets
+      run: |
+        ASAN_OPTIONS=alloc_dealloc_mismatch=0 \
+        timeout 30 ./build-fuzz/cimbar_fuzz_decode -runs=10000 fuzz/corpus/ 2>&1 | tail -3
+        ASAN_OPTIONS=alloc_dealloc_mismatch=0 \
+        timeout 30 ./build-fuzz/cimbar_fuzz_encode -runs=10000 fuzz/corpus/ 2>&1 | tail -3
+        ASAN_OPTIONS=alloc_dealloc_mismatch=0 \
+        timeout 30 ./build-fuzz/cimbar_fuzz_fountain -runs=10000 fuzz/corpus/ 2>&1 | tail -3
+
