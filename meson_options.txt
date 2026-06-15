@@ -6,3 +6,5 @@ option('disable_tests', type: 'boolean', value: false,
   description: 'Disable all tests')
 option('opencv_dir', type: 'string', value: '',
   description: 'Path to OpenCV install dir (WASM builds)')
+option('fuzz', type: 'boolean', value: false,
+  description: 'Build fuzz targets with libFuzzer (requires clang)')

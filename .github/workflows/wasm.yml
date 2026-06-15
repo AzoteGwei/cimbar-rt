@@ -29,9 +29,24 @@ jobs:
             libatk-bridge2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 \
             libgdk-pixbuf2.0-0
 
+      - name: Prepare ccache directory
+        run: mkdir -p ~/.ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-wasm-${{ hashFiles('meson.build', 'meson_options.txt', 'src/**/*.cpp', 'src/**/*.h', 'src/**/*.hpp', 'config/wasm-cross.ini') }}
+
       - name: Get openCV
         run: |
           git clone --recurse-submodules --depth 1 --branch 4.11.0 https://github.com/opencv/opencv.git opencv4
+
+      - name: Cache OpenCV WASM build
+        uses: actions/cache@v4
+        with:
+          path: opencv4/opencv-build-wasm
+          key: opencv-wasm-ocv4.11.0-emsdk3.1.69
 
       - name: Get npm deps
         run: ls -l web/
@@ -40,7 +55,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: emscripten/emsdk:3.1.69
-          options: -v ${{ github.workspace }}:/usr/src/app
+          options: -v ${{ github.workspace }}:/usr/src/app -v /home/runner/.ccache:/root/.ccache
           shell: bash
           run: |
             SKIP_JS=1 bash /usr/src/app/scripts/package-wasm.sh

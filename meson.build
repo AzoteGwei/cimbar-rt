@@ -141,3 +141,47 @@ endif
 if not disable_tests
   subdir('test')
 endif
+
+# ==================== Fuzz targets (libFuzzer, clang only) ====================
+if get_option('fuzz')
+  if cpp.get_id() != 'clang'
+    error('fuzz targets require clang (libFuzzer)')
+  endif
+
+  fuzz_flags = ['-fsanitize=fuzzer,address']
+  fuzz_link_flags = ['-fsanitize=fuzzer,address']
+
+  fuzz_deps = [
+    api_dep,
+    core_codec_dep, core_compression_dep,
+    pipeline_encode_dep, pipeline_decode_dep,
+    imgproc_extract_dep,
+    support_os_dep, support_text_dep,
+    correct_dep, wirehair_dep, zstd_dep,
+    opencv_dep, cpp_fs_dep,
+  ]
+
+  executable('cimbar_fuzz_decode',
+    'fuzz/cimbar_fuzz_decode.cc',
+    include_directories: [src_inc, third_party_inc],
+    dependencies: fuzz_deps,
+    cpp_args: fuzz_flags,
+    link_args: fuzz_link_flags,
+  )
+
+  executable('cimbar_fuzz_fountain',
+    'fuzz/cimbar_fuzz_fountain.cc',
+    include_directories: [src_inc, third_party_inc],
+    dependencies: fuzz_deps,
+    cpp_args: fuzz_flags,
+    link_args: fuzz_link_flags,
+  )
+
+  executable('cimbar_fuzz_encode',
+    'fuzz/cimbar_fuzz_encode.cc',
+    include_directories: [src_inc, third_party_inc],
+    dependencies: fuzz_deps,
+    cpp_args: fuzz_flags,
+    link_args: fuzz_link_flags,
+  )
+endif

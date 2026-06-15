@@ -32,8 +32,20 @@ jobs:
       with:
         submodules: 'recursive'
 
+    - name: ccache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: ccache-${{ matrix.config.os }}-${{ matrix.config.name }}-${{ hashFiles('meson.build', 'meson_options.txt', 'src/**/*.cpp', 'src/**/*.h', 'src/**/*.hpp') }}
+        restore-keys: |
+          ccache-${{ matrix.config.os }}-${{ matrix.config.name }}-
+          ccache-${{ matrix.config.os }}-
+
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
+      run: sudo apt-get update && sudo apt-get install ccache libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
+
+    - name: Configure ccache
+      run: ccache --max-size=500M
 
     - name: Configure Meson
       run: ${{ matrix.config.env }} meson setup build --prefix ${{ github.workspace }}/dist
@@ -66,4 +78,20 @@ jobs:
 
     - name: run cppcheck
       run: cppcheck src/ tools/
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build clang
+
+    - name: Configure Meson with fuzz targets
+      run: CXX="clang++" CC="clang" meson setup build-fuzz -Dfuzz=true --prefix ${{ github.workspace }}/dist
+
+    - name: Build fuzz targets
+      run: ninja -C build-fuzz cimbar_fuzz_decode cimbar_fuzz_fountain cimbar_fuzz_encode
 

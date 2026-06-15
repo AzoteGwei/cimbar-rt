@@ -23,6 +23,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -35,8 +36,12 @@
 // =========================================================================
 
 namespace {
-	static void* default_alloc(void*, size_t size) { return malloc(size); }
-	static void default_free(void*, void* ptr) { free(ptr); }
+	static void* default_alloc(void*, size_t size)
+	{
+		try { return ::operator new(size); }
+		catch (...) { return nullptr; }
+	}
+	static void default_free(void*, void* ptr) { ::operator delete(ptr); }
 	static const cimbar_allocator_t s_default_allocator = {default_alloc, default_free, nullptr};
 
 	template <typename T, typename... Args>
@@ -144,13 +149,42 @@ namespace {
 		if (n > max_cells)
 			return CIMBAR_ERR_NOMEM;
 
+		// CimbReader reads cells in flood-fill order (FloodDecodePositions).
+		// CimbWriter expects cells in linear-interleaved order (CellPositions).
+		// Store cells at their linear position index, then reorder by interleave.
+		std::vector<cimbar_cell_t> cells_by_pos(n);
 		for (unsigned i = 0; i < n; ++i)
 		{
 			PositionData pos;
 			unsigned sym_bits = reader.read(pos);
 			unsigned col_bits = reader.read_color(pos);
-			cells[i].symbol = (uint8_t)sym_bits;
-			cells[i].color = (uint8_t)col_bits;
+			cells_by_pos[pos.i].symbol = (uint8_t)sym_bits;
+			cells_by_pos[pos.i].color = (uint8_t)col_bits;
+		}
+
+		// Build interleave mapping: for each interleaved index, which linear index?
+		CellPositions::positions_list linear_positions = CellPositions::compute(
+			cimbar::vec_xy{cimbar::Config::cell_spacing_x(), cimbar::Config::cell_spacing_y()},
+			cimbar::vec_xy{cimbar::Config::cells_per_col_x(), cimbar::Config::cells_per_col_y()},
+			cimbar::Config::cell_offset(), cimbar::vec_xy{cimbar::Config::corner_padding_x(), cimbar::Config::corner_padding_y()},
+			0, 0);
+		CellPositions::positions_list interleaved_positions = CellPositions::compute(
+			cimbar::vec_xy{cimbar::Config::cell_spacing_x(), cimbar::Config::cell_spacing_y()},
+			cimbar::vec_xy{cimbar::Config::cells_per_col_x(), cimbar::Config::cells_per_col_y()},
+			cimbar::Config::cell_offset(), cimbar::vec_xy{cimbar::Config::corner_padding_x(), cimbar::Config::corner_padding_y()},
+			cimbar::Config::interleave_blocks(), cimbar::Config::interleave_partitions());
+
+		// Map: linear_position -> index_in_linear_positions
+		std::unordered_map<uint64_t, unsigned> linear_index_of;
+		for (unsigned i = 0; i < n; ++i)
+			linear_index_of[(uint64_t)(uint32_t)linear_positions[i].first << 32 | (uint32_t)linear_positions[i].second] = i;
+
+		// Output in interleaved order
+		for (unsigned i = 0; i < n; ++i)
+		{
+			uint64_t key = (uint64_t)(uint32_t)interleaved_positions[i].first << 32 | (uint32_t)interleaved_positions[i].second;
+			unsigned lin_idx = linear_index_of[key];
+			cells[i] = cells_by_pos[lin_idx];
 		}
 
 		if (num_cells) *num_cells = n;
@@ -400,7 +434,9 @@ int cimbar_encoder_encode_next_cells(cimbar_encoder_t* enc, cimbar_cell_t* cells
 	// This is not optimal but produces correct cell data.
 	// TODO: direct cell output path
 	unsigned w = 0, h = 0;
-	std::vector<uint8_t> rgba_temp(1024 * 1024); // 1MB temp buffer
+	unsigned img_x = cimbar::Config::image_size_x();
+	unsigned img_y = cimbar::Config::image_size_y();
+	std::vector<uint8_t> rgba_temp((size_t)img_x * img_y * 4);
 	int ret = cimbar_encoder_encode_next(enc, rgba_temp.data(), rgba_temp.size(), &w, &h);
 	if (ret < 0)
 		return ret;
@@ -776,8 +812,11 @@ int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* dec, const cimbar_cell_
 	if (rendered.empty())
 		return CIMBAR_ERR_DECODE_FAIL;
 
-	return cimbar_decoder_fountain_feed(dec, rendered.data, rendered.total() * rendered.elemSize(),
-	                                   rendered.cols, rendered.rows, CIMBAR_IMAGE_RGB);
+	// CimbWriter produces BGR images (OpenCV default), but feed expects RGB
+	cv::Mat rendered_rgb;
+	cv::cvtColor(rendered, rendered_rgb, cv::COLOR_BGR2RGB);
+	return cimbar_decoder_fountain_feed(dec, rendered_rgb.data, rendered_rgb.total() * rendered_rgb.elemSize(),
+	                                   rendered_rgb.cols, rendered_rgb.rows, CIMBAR_IMAGE_RGB);
 }
 
 int cimbar_decoder_fountain_is_complete(const cimbar_decoder_t* dec)
