@@ -37,6 +37,8 @@ jobs:
         with:
           path: ~/.ccache
           key: ccache-wasm-${{ hashFiles('meson.build', 'meson_options.txt', 'src/**/*.cpp', 'src/**/*.h', 'src/**/*.hpp', 'config/wasm-cross.ini') }}
+          restore-keys: |
+            ccache-wasm-
 
       - name: Get openCV
         run: |
@@ -47,6 +49,8 @@ jobs:
         with:
           path: ${{ github.workspace }}/opencv4/opencv-build-wasm
           key: opencv-wasm-ocv4.11.0-emsdk3.1.69
+          restore-keys: |
+            opencv-wasm-
 
       - name: Get npm deps
         run: ls -l web/
