@@ -143,6 +143,10 @@ public:
 			return -11;
 		}
 
+		// Sanity check: reject absurd file sizes to prevent O(n^2) wirehair allocation
+		if (md.file_size() > _maxFileSize)
+			return -13;
+
 		// check if already done
 		if (is_done(md.id()))
 			return -1;
@@ -202,6 +206,7 @@ protected:
 
 protected:
 	unsigned _chunkSize;
+	unsigned _maxFileSize = 100 * 1024 * 1024; // 100MB cap to prevent O(n^2) wirehair blowup
 	std::function<std::string(const std::string&, const std::vector<uint8_t>&)> _onStore;
 
 	// maybe instead of unordered_map+set, something where we can "age out" old streams?

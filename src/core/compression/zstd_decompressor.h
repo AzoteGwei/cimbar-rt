@@ -30,6 +30,7 @@ public:
 
 			while (input.pos < input.size)
 			{
+				size_t prev_pos = input.pos;
 				size_t res = ZSTD_decompressStream(_ds, &output, &input);
 				if (ZSTD_isError(res))
 				{
@@ -43,6 +44,9 @@ public:
 					_inBuff = std::string_view(_inBuff.data() + input.pos, _inBuff.size() - input.pos);
 					return true;
 				}
+
+				if (input.pos == prev_pos)
+					break;
 			}
 			_inBuff = std::string_view(_inBuff.data() + input.size, _inBuff.size() - input.size);
 		}

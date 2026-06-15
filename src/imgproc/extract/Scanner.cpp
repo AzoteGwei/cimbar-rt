@@ -231,6 +231,8 @@ point<int> Scanner::find_edge(const point<int>& u, const point<int>& v, point<do
 	for (const point<double>& check : {out_v, in_v})
 	{
 		double max_check = std::max(abs(check.x()), abs(check.y()));
+		if (max_check == 0)
+			continue;
 		point<double> unit = check / max_check;
 
 		EdgeScanState state;
