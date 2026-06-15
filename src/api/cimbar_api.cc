@@ -216,11 +216,7 @@ struct cimbar_encoder {
 	std::string input_filename;
 
 	fountain_encoder_stream::ptr fes;
-	unsigned required_frames;
 	unsigned frames_generated;
-
-	std::stringstream simple_stream;
-	bool simple_mode;
 
 	std::string error;
 
@@ -231,9 +227,7 @@ struct cimbar_encoder {
 		, compression_level(16)
 		, fountain_redundancy(4.0)
 		, encode_id(109)
-		, required_frames(0)
 		, frames_generated(0)
-		, simple_mode(false)
 	{}
 };
 
@@ -351,14 +345,7 @@ int cimbar_encoder_set_input(cimbar_encoder_t* enc, const void* data, size_t len
 	}
 
 	enc->input_set = true;
-	enc->simple_mode = false;
 	enc->frames_generated = 0;
-
-	unsigned chunks_per_frame = cimbar::Config::fountain_chunks_per_frame(cimbar::Config::symbol_bits());
-	enc->required_frames = (enc->fes->blocks_required() * enc->fountain_redundancy) / chunks_per_frame;
-	if (enc->required_frames == 0)
-		enc->required_frames = 1;
-
 	return CIMBAR_OK;
 }
 
@@ -384,29 +371,25 @@ int cimbar_encoder_encode_next(cimbar_encoder_t* enc, uint8_t* rgba, size_t buf_
 	if (!enc->input_set || !enc->fes)
 		return CIMBAR_ERR_NO_DATA;
 
-	if (enc->frames_generated >= enc->required_frames)
+	// Keep generating frames, wrapping around when the fountain stream
+	// has cycled, until the encoder can't produce a valid image.
+	int max_wraps = 100;
+	while (max_wraps-- > 0)
 	{
-		// Check if the fountain stream still has data
-		if (enc->fes->block_count() > enc->required_frames * 8)
-			return CIMBAR_ERR_STREAM_END;
+		Encoder enc_cpp;
+		enc_cpp.set_encode_id(enc->encode_id);
+		auto frame = enc_cpp.encode_next(*enc->fes);
+		if (frame)
+		{
+			++enc->frames_generated;
+			return mat_to_rgba(*frame, rgba, buf_size, out_w, out_h);
+		}
 
-		// Try wrapping around
-		unsigned chunks_per_frame = cimbar::Config::fountain_chunks_per_frame(cimbar::Config::symbol_bits());
-		enc->required_frames = (enc->fes->blocks_required() * enc->fountain_redundancy) / chunks_per_frame;
-		if (enc->required_frames == 0)
-			enc->required_frames = 1;
+		// encode_next returned no frame — restart the fountain stream
 		enc->fes->restart();
-		enc->frames_generated = 0;
 	}
 
-	Encoder enc_cpp;
-	enc_cpp.set_encode_id(enc->encode_id);
-	auto frame = enc_cpp.encode_next(*enc->fes);
-	if (!frame)
-		return CIMBAR_ERR_STREAM_END;
-
-	++enc->frames_generated;
-	return mat_to_rgba(*frame, rgba, buf_size, out_w, out_h);
+	return CIMBAR_ERR_STREAM_END;
 }
 
 int cimbar_encoder_encode_next_cells(cimbar_encoder_t* enc, cimbar_cell_t* cells, size_t max_cells, unsigned* num_cells)
@@ -432,9 +415,7 @@ int cimbar_encoder_reset(cimbar_encoder_t* enc)
 
 	enc->input_set = false;
 	enc->fes.reset();
-	enc->simple_stream.str(std::string());
 	enc->frames_generated = 0;
-	enc->required_frames = 0;
 	enc->error.clear();
 	return CIMBAR_OK;
 }
@@ -472,29 +453,57 @@ int cimbar_encoder_dump(const cimbar_encoder_t* enc, char* buf, size_t len)
 
 struct cimbar_decoder {
 	cimbar_allocator_t alloc;
-	DecoderPlus cpp_decoder;
+	DecoderPlus* cpp_decoder;
 
 	std::unique_ptr<fountain_decoder_sink> fountain_sink;
 	unsigned fountain_chunk_size;
 	bool fountain_running;
+	std::vector<uint8_t> recovered_data;
 
-	uint32_t completed_id;
 	std::vector<uint8_t> reassembled;
 	bool decompress_ready;
 	std::unique_ptr<cimbar::zstd_decompressor<std::stringstream>> decompressor;
-	size_t decompress_offset;
 
 	std::string error;
 
 	cimbar_decoder(const cimbar_allocator_t& a)
 		: alloc(a)
-		, cpp_decoder()
+		, cpp_decoder(nullptr)
 		, fountain_chunk_size(cimbar::Config::fountain_chunk_size())
 		, fountain_running(false)
-		, completed_id(0)
 		, decompress_ready(false)
-		, decompress_offset(0)
 	{
+		// Decoder is created lazily (after Config is set)
+	}
+
+	~cimbar_decoder()
+	{
+		if (cpp_decoder)
+		{
+			cpp_decoder->~DecoderPlus();
+			alloc.free(alloc.context, cpp_decoder);
+		}
+	}
+
+	DecoderPlus* get_or_create_decoder()
+	{
+		if (!cpp_decoder)
+		{
+			void* ptr = alloc.alloc(alloc.context, sizeof(DecoderPlus));
+			if (ptr)
+				cpp_decoder = new (ptr) DecoderPlus();
+		}
+		return cpp_decoder;
+	}
+
+	void destroy_decoder()
+	{
+		if (cpp_decoder)
+		{
+			cpp_decoder->~DecoderPlus();
+			alloc.free(alloc.context, cpp_decoder);
+			cpp_decoder = nullptr;
+		}
 	}
 };
 
@@ -505,6 +514,10 @@ namespace {
 		if (!output || !out_len || *out_len == 0)
 			return CIMBAR_ERR_BAD_PARAM;
 
+		DecoderPlus* decoder = dec->get_or_create_decoder();
+		if (!decoder)
+			return CIMBAR_ERR_NOMEM;
+
 		unsigned chunk_size = cimbar::Config::fountain_chunk_size();
 		unsigned chunks_per_frame = cimbar::Config::fountain_chunks_per_frame(cimbar::Config::bits_per_cell());
 		unsigned needed = chunk_size * chunks_per_frame;
@@ -513,7 +526,7 @@ namespace {
 			return CIMBAR_ERR_NOMEM;
 
 		escrow_buffer_writer ebw(output, chunks_per_frame, chunk_size);
-		unsigned bytes = dec->cpp_decoder.decode_fountain(img_rgb, ebw, false, 2);
+		unsigned bytes = decoder->decode_fountain(img_rgb, ebw, false, 2);
 
 		*out_len = bytes;
 		return bytes > 0 ? (int)bytes : CIMBAR_ERR_NO_DATA;
@@ -542,6 +555,8 @@ int cimbar_decoder_set_config(cimbar_decoder_t* dec, cimbar_config_t key, int va
 	case CIMBAR_CFG_PRESET:
 		cimbar::Config::update(value);
 		dec->fountain_chunk_size = cimbar::Config::fountain_chunk_size();
+		// DecoderPlus was created with old Config; re-create it
+		dec->destroy_decoder();
 		return CIMBAR_OK;
 	default:
 		return CIMBAR_ERR_BAD_PARAM;
@@ -647,7 +662,7 @@ int cimbar_decoder_fountain_feed(cimbar_decoder_t* dec, const uint8_t* image_dat
 	if (!dec || !image_data) return CIMBAR_ERR_BAD_PARAM;
 	(void)data_len;
 
-	if (!dec->decompress_ready && dec->fountain_sink && dec->fountain_sink->is_done(dec->completed_id))
+	if (!dec->reassembled.empty())
 		return CIMBAR_OK;
 
 	cv::Mat img_rgb = raw_to_mat(image_data, width, height, format);
@@ -665,11 +680,14 @@ int cimbar_decoder_fountain_feed(cimbar_decoder_t* dec, const uint8_t* image_dat
 	// Decode frame into a buffer
 	std::vector<uint8_t> frame_buf(chunk_size * chunks_per_frame);
 	escrow_buffer_writer ebw(frame_buf.data(), chunks_per_frame, chunk_size);
-	dec->cpp_decoder.decode_fountain(deskewed, ebw, false, 2);
+	DecoderPlus* decoder = dec->get_or_create_decoder();
+	if (!decoder)
+		return CIMBAR_ERR_NOMEM;
+	decoder->decode_fountain(deskewed, ebw, false, 2);
 
 	unsigned bytes_written = ebw.buffers_in_use() * chunk_size;
 	if (bytes_written == 0)
-		return CIMBAR_OK;
+		return 1;
 
 	// Create fountain sink if needed
 	if (!dec->fountain_running)
@@ -678,18 +696,35 @@ int cimbar_decoder_fountain_feed(cimbar_decoder_t* dec, const uint8_t* image_dat
 		dec->fountain_running = true;
 	}
 
-	int64_t res = dec->fountain_sink->decode_frame(reinterpret_cast<const char*>(frame_buf.data()), bytes_written);
-	if (res > 0)
+	// Feed all chunks from this frame
+	unsigned num_chunks = ebw.buffers_in_use();
+	FountainMetadata last_md(nullptr, 0); // used to track the last decode attempt
+	for (unsigned i = 0; i < num_chunks; ++i)
 	{
-		// File complete!
-		dec->completed_id = (uint32_t)res;
-		dec->decompress_ready = false;
-		return CIMBAR_OK;
-	}
-	if (res == 0)
-		return 1; // need more frames
+		const char* chunk_data = reinterpret_cast<const char*>(frame_buf.data()) + i * chunk_size;
+		int64_t id = dec->fountain_sink->decode_frame(chunk_data, chunk_size);
 
-	return CIMBAR_OK;
+		// decode_frame returns > 0 after the first successful block write.
+		// We try direct recovery; if it fails we keep feeding more chunks.
+		if (id > 0 && dec->reassembled.empty())
+		{
+			auto progress = dec->fountain_sink->get_progress();
+			double p = progress.empty() ? -1 : progress[0];
+			if (p >= 1.0)
+			{
+				size_t file_size = FountainMetadata((uint32_t)id).file_size();
+				if (file_size > 0 && file_size < 1024 * 1024 * 100)
+				{
+					dec->reassembled.resize(file_size);
+					if (dec->fountain_sink->recover((uint32_t)id, dec->reassembled.data(), dec->reassembled.size()))
+						return CIMBAR_OK;
+					dec->reassembled.clear();
+				}
+			}
+		}
+	}
+
+	return 1;
 }
 
 int cimbar_decoder_fountain_feed_file(cimbar_decoder_t* dec, const char* path)
@@ -731,12 +766,15 @@ int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* dec, const cimbar_cell_
 int cimbar_decoder_fountain_is_complete(const cimbar_decoder_t* dec)
 {
 	if (!dec) return 0;
-	return dec->decompress_ready || (!dec->reassembled.empty());
+	return dec->decompress_ready || !dec->reassembled.empty();
 }
 
 int cimbar_decoder_fountain_get_progress(const cimbar_decoder_t* dec)
 {
-	if (!dec || !dec->fountain_sink) return 0;
+	if (!dec) return 0;
+	if (!dec->reassembled.empty())
+		return 100;
+	if (!dec->fountain_sink) return 0;
 	auto progress = dec->fountain_sink->get_progress();
 	if (progress.empty()) return 0;
 	int total = 0;
@@ -752,20 +790,8 @@ int cimbar_decoder_fountain_read(cimbar_decoder_t* dec, uint8_t* buf, size_t* ou
 	// Trigger decompression if not ready
 	if (!dec->decompress_ready)
 	{
-		if (!dec->fountain_sink || dec->reassembled.empty())
-		{
-			// Try to recover the data from the sink
-			if (!dec->fountain_sink->is_done(dec->completed_id))
-				return CIMBAR_ERR_INCOMPLETE;
-
-			size_t file_size = FountainMetadata(dec->completed_id).file_size();
-			if (file_size == 0)
-				return CIMBAR_ERR_NO_DATA;
-
-			dec->reassembled.resize(file_size);
-			if (!dec->fountain_sink->recover(dec->completed_id, dec->reassembled.data(), dec->reassembled.size()))
-				return CIMBAR_ERR_DECODE_FAIL;
-		}
+		if (dec->reassembled.empty())
+			return CIMBAR_ERR_INCOMPLETE;
 
 		// Initialize decompressor
 		dec->decompressor = std::make_unique<cimbar::zstd_decompressor<std::stringstream>>();
@@ -774,19 +800,20 @@ int cimbar_decoder_fountain_read(cimbar_decoder_t* dec, uint8_t* buf, size_t* ou
 		dec->decompress_ready = true;
 	}
 
-	// Decompress one chunk
+	// Decompress all data into a string
 	dec->decompressor->str(std::string());
-	dec->decompressor->write_once();
+	while (dec->decompressor->write_once()) {}
 	std::string chunk = dec->decompressor->str();
 
 	size_t to_copy = std::min(*out_len, chunk.size());
-	memcpy(buf, chunk.data(), to_copy);
+	if (to_copy > 0)
+		memcpy(buf, chunk.data(), to_copy);
 	*out_len = to_copy;
 
-	// Check if we've consumed everything
-	if (to_copy == 0 || dec->decompressor->good())
+	if (to_copy == 0 || !dec->decompressor->good())
 	{
-		// No more data or error
+		// All data consumed or error. Reset for potential re-read.
+		dec->decompress_ready = false;
 	}
 
 	return (int)to_copy;
@@ -822,10 +849,9 @@ int cimbar_decoder_reset(cimbar_decoder_t* dec)
 	dec->fountain_sink.reset();
 	dec->decompressor.reset();
 	dec->reassembled.clear();
+	dec->recovered_data.clear();
 	dec->fountain_running = false;
 	dec->decompress_ready = false;
-	dec->decompress_offset = 0;
-	dec->completed_id = 0;
 	dec->error.clear();
 	return CIMBAR_OK;
 }
@@ -833,8 +859,8 @@ int cimbar_decoder_reset(cimbar_decoder_t* dec)
 int cimbar_decoder_dump(const cimbar_decoder_t* dec, char* buf, size_t len)
 {
 	if (!dec || !buf) return CIMBAR_ERR_BAD_PARAM;
-	std::string s = fmt::format("Decoder: fountain_running={} completed={} decompress_ready={}",
-		dec->fountain_running, dec->completed_id, dec->decompress_ready);
+	std::string s = fmt::format("Decoder: fountain_running={} decompress_ready={}",
+		dec->fountain_running, dec->decompress_ready);
 	size_t n = std::min(len - 1, s.size());
 	memcpy(buf, s.data(), n);
 	buf[n] = '\0';
