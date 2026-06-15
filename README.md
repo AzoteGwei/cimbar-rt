@@ -69,12 +69,20 @@ ninja -C build
 meson install -C build
 ```
 
-To speed up repeated builds with ccache:
+To speed up repeated builds with ccache (auto-detected by Meson when installed):
 ```
-CC="ccache gcc" CXX="ccache g++" meson setup build
+sudo apt install ccache
+meson setup build
 ninja -C build
 ```
 Or use the native file: `meson setup build --native-file config/native-ccache.ini`
+
+To build and run fuzz targets (requires clang with libFuzzer):
+```
+CXX=clang++ CC=clang meson setup build-fuzz -Dfuzz=true
+ninja -C build-fuzz cimbar_fuzz_decode cimbar_fuzz_fountain cimbar_fuzz_encode
+./build-fuzz/cimbar_fuzz_decode -runs=10000 fuzz/corpus/
+```
 
 By default, libcimbar will install build products under `./dist/bin/`.
 

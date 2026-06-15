@@ -11,11 +11,18 @@ wasm and asm.js releases are available [here](https://github.com/sz3/libcimbar/r
 To build, use the `scripts/package-wasm.sh` script in a docker container:
 
 ```
-docker run --mount type=bind,source="$(pwd)",target="/usr/src/app" -it emscripten/emsdk:3.1.39
+docker run --mount type=bind,source="$(pwd)",target="/usr/src/app" -it emscripten/emsdk:3.1.69
 ```
 Then, inside the container:
 ```
 bash /usr/src/app/scripts/package-wasm.sh
+```
+
+The build now uses ccache (auto-detected) and caches the OpenCV WASM build across runs.
+To speed up repeated builds with ccache + wasm:
+```
+meson setup build-wasm --cross-file config/wasm-ccache.ini -Dwasm=1 -Dopencv_dir=/path/to/opencv
+ninja -C build-wasm install
 ```
 
 ## Alternative build for the adventurous

@@ -69,9 +69,10 @@ ninja -C build
 meson install -C build
 ```
 
-使用 ccache 加速重复构建：
+使用 ccache 加速重复构建（Meson 安装后自动检测）：
 ```
-CC="ccache gcc" CXX="ccache g++" meson setup build
+sudo apt install ccache
+meson setup build
 ninja -C build
 ```
 或使用 native 文件：`meson setup build --native-file config/native-ccache.ini`
