@@ -31,11 +31,16 @@ if is_wasm
 
   if wasm_mode != 2
     wasm_exported_fns += [
-      '_cimbard_get_report', '_cimbard_get_bufsize',
-      '_cimbard_scan_extract_decode', '_cimbard_fountain_decode',
-      '_cimbard_get_filesize', '_cimbard_get_filename',
-      '_cimbard_get_decompress_bufsize', '_cimbard_decompress_read',
-      '_cimbard_configure_decode',
+      '_cimbar_decoder_create', '_cimbar_decoder_destroy',
+      '_cimbar_decoder_set_config', '_cimbar_decoder_get_config',
+      '_cimbar_decoder_fountain_feed',
+      '_cimbar_decoder_fountain_is_complete',
+      '_cimbar_decoder_fountain_get_progress',
+      '_cimbar_decoder_fountain_read',
+      '_cimbar_decoder_fountain_get_filename',
+      '_cimbar_decoder_fountain_get_filesize',
+      '_cimbar_decoder_reset', '_cimbar_decoder_dump',
+      '_cimbar_extract_cells',
     ]
   endif
 
@@ -45,7 +50,7 @@ if is_wasm
     '-s', 'FILESYSTEM=0',
     '-s', 'TOTAL_MEMORY=134217728',
     '-s', 'EXPORTED_FUNCTIONS=[' + ','.join(wasm_exported_fns) + ']',
-    '-s', 'EXPORTED_RUNTIME_METHODS=[HEAPU8,UTF8ToString,stringToUTF8]',
+    '-s', 'EXPORTED_RUNTIME_METHODS=[HEAPU8,HEAPU32,UTF8ToString,stringToUTF8]',
   ]
 
   if wasm_mode == 2
