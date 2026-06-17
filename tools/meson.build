@@ -33,50 +33,7 @@ executable('cimbar',
   install_dir: 'bin',
 )
 
-# --- cimbar-send ---
-executable('cimbar_send',
-  'cimbar-send/send.cpp',
-  include_directories: [src_inc, third_party_inc],
-  dependencies: [api_dep],
-  install: true,
-  install_dir: 'bin',
-)
 
-# --- cimbar-recv ---
-recv_deps = [
-  api_dep,
-  core_codec_dep,
-  core_compression_dep,
-  core_fountain_dep,
-  pipeline_decode_dep,
-  imgproc_extract_dep,
-  support_os_dep,
-  support_text_dep,
-  support_display_dep,
-  correct_dep,
-  wirehair_dep,
-  zstd_dep,
-  opencv_dep,
-  glfw_dep,
-  gl_dep,
-]
-
-executable('cimbar_recv',
-  'cimbar-recv/recv.cpp',
-  include_directories: [src_inc, third_party_inc],
-  dependencies: recv_deps,
-  install: true,
-  install_dir: 'bin',
-)
-
-# --- cimbar-recv2 ---
-executable('cimbar_recv2',
-  'cimbar-recv2/recv2.cpp',
-  include_directories: [src_inc, third_party_inc],
-  dependencies: recv_deps,
-  install: true,
-  install_dir: 'bin',
-)
 
 # --- cimbar-extract ---
 executable('cimbar_extract',

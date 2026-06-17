@@ -1,21 +1,23 @@
 var Main = function () {
 
-  // configurable
   var _interval = 66;
   var _colorBalance = false;
 
-  // internal
   var _pause = 0;
   var _showStats = false;
   var _counter = 0;
   var _renderTime = 0;
 
-  var _lastFrame = 0; // used with _interval
+  var _lastFrame = 0;
   var _wakeLock = undefined;
 
-  // cached
-  var _idealRatio = 1;
-  var _compressBuff = undefined;
+  var _encoder = 0;
+  var _imageW = 0;
+  var _imageH = 0;
+
+  var CIMBAR_CFG_PRESET = 9;
+  var CIMBAR_CFG_IMAGE_SIZE_X = 7;
+  var CIMBAR_CFG_IMAGE_SIZE_Y = 8;
 
   function toggleFullscreen() {
     if (document.fullscreenElement) {
@@ -26,57 +28,6 @@ var Main = function () {
     }
   }
 
-  function compress_buff(chunkSize) {
-    if (_compressBuff === undefined) {
-      const dataPtr = Module._malloc(chunkSize);
-      _compressBuff = new Uint8Array(Module.HEAPU8.buffer, dataPtr, chunkSize);
-    }
-    else if (_compressBuff.buffer !== Module.HEAPU8.buffer) {
-      _compressBuff = new Uint8Array(Module.HEAPU8.buffer, _compressBuff.byteOffset, _compressBuff.byteLength);
-    }
-    return _compressBuff;
-  }
-
-  function importFile(file) {
-    let chunkSize = Module._cimbare_encode_bufsize();
-    let compBuff = compress_buff(chunkSize);
-
-    let offset = 0;
-    let reader = new FileReader();
-
-    Main.encode_init(file.name);
-
-    reader.onload = function (event) {
-      const datalen = event.target.result.byteLength;
-      if (datalen > 0) {
-        // copy to wasm buff and write
-        const uint8View = new Uint8Array(event.target.result);
-        compBuff = compress_buff(chunkSize);
-        compBuff.set(uint8View);
-        const buffView = new Uint8Array(Module.HEAPU8.buffer, compBuff.byteOffset, datalen);
-        Main.encode_bytes(buffView);
-
-        offset += chunkSize;
-        readNext();
-      } else {
-        // Done reading file
-        console.log("Finished reading file.");
-
-        // this null call is functionally a flush()
-        // so a no-op, unless it isn't
-        const nullBuff = new Uint8Array(Module.HEAPU8.buffer, compBuff.byteOffset, 0);
-        Main.encode_bytes(nullBuff);
-      }
-    };
-
-    function readNext() {
-      let slice = file.slice(offset, offset + chunkSize);
-      reader.readAsArrayBuffer(slice);
-    }
-
-    readNext();
-  }
-
   function copyToWasmHeap(abuff) {
     const dataPtr = Module._malloc(abuff.length);
     const wasmData = new Uint8Array(Module.HEAPU8.buffer, dataPtr, abuff.length);
@@ -84,26 +35,51 @@ var Main = function () {
     return wasmData;
   }
 
-  // public interface
+  function importFile(file) {
+    Main.encode_init(file.name);
+
+    let reader = new FileReader();
+    reader.onload = function (event) {
+      const uint8View = new Uint8Array(event.target.result);
+      const dataPtr = Module._malloc(uint8View.length);
+      const wasmData = new Uint8Array(Module.HEAPU8.buffer, dataPtr, uint8View.length);
+      wasmData.set(uint8View);
+
+      const wasmFn = copyToWasmHeap(new TextEncoder("utf-8").encode(file.name));
+      var res = Module._cimbar_encoder_set_input(_encoder, dataPtr, uint8View.length, wasmFn.byteOffset);
+      Module._free(wasmFn.byteOffset);
+      Module._free(dataPtr);
+      if (res < 0) {
+        console.error("cimbar_encoder_set_input failed: " + res);
+        return;
+      }
+
+      var wPtr = Module._malloc(8);
+      Module._cimbar_encoder_get_config(_encoder, CIMBAR_CFG_IMAGE_SIZE_X, wPtr);
+      Module._cimbar_encoder_get_config(_encoder, CIMBAR_CFG_IMAGE_SIZE_Y, wPtr + 4);
+      _imageW = Module.HEAPU32[wPtr >> 2];
+      _imageH = Module.HEAPU32[(wPtr + 4) >> 2];
+      Module._free(wPtr);
+
+      var canvas = document.getElementById('canvas');
+      canvas.width = _imageW;
+      canvas.height = _imageH;
+
+      Main.setActive();
+      console.log("encoding " + file.name + " (" + uint8View.length + " bytes, image " + _imageW + "x" + _imageH + ")");
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   return {
     init: function (canvas) {
       Main.setMode('B');
-      Main.check_GL_enabled(canvas);
-    },
-
-    check_GL_enabled: function (canvas) {
-      if (canvas.getContext("2d")) {
-        var elem = document.getElementById('dragdrop');
-        elem.classList.add("error");
-      }
     },
 
     resize: function () {
-      // reset zoom
       var canvas = document.getElementById('canvas');
       var width = window.innerWidth - 10;
       var height = window.innerHeight - 10;
-      Main.scaleCanvas(canvas, width, height);
       Main.alignInvisibleClick(canvas);
       Main.checkNavButtonOverlap();
     },
@@ -114,7 +90,6 @@ var Main = function () {
     },
 
     togglePause: function (pause) {
-      // pause is a cooldown. We pause to help autofocus, but we don't want to do it forever...
       if (pause === undefined) {
         pause = !Main.isPaused();
       }
@@ -126,31 +101,8 @@ var Main = function () {
     },
 
     scaleCanvas: function (canvas, width, height) {
-      // using ratio from current config,
-      // determine optimal dimensions and rotation
-      var needRotate = _idealRatio > 1 && height > width;
-      Module._cimbare_rotate_window(needRotate);
-
-      var ourRatio = needRotate ? height / width : width / height;
-
-      var xdim = needRotate ? height : width;
-      var ydim = needRotate ? width : height;
-      if (ourRatio > _idealRatio) {
-        xdim = Math.floor(xdim * _idealRatio / ourRatio);
-      }
-      else if (ourRatio < _idealRatio) {
-        ydim = Math.floor(ydim * ourRatio / _idealRatio);
-      }
-
-      console.log(xdim + "x" + ydim);
-      if (needRotate) {
-        canvas.style.width = ydim + "px";
-        canvas.style.height = xdim + "px";
-      }
-      else {
-        canvas.style.width = xdim + "px";
-        canvas.style.height = ydim + "px";
-      }
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
     },
 
     alignInvisibleClick: function (canvas) {
@@ -165,14 +117,10 @@ var Main = function () {
     },
 
     encode_init: function (filename) {
-      console.log("encoding " + filename);
-      const wasmFn = copyToWasmHeap(new TextEncoder("utf-8").encode(filename));
-      try {
-        var res = Module._cimbare_init_encode(wasmFn.byteOffset, wasmFn.length, -1);
-        console.log("init_encode returned " + res);
-      } finally {
-        Module._free(wasmFn.byteOffset);
+      if (_encoder) {
+        Module._cimbar_encoder_destroy(_encoder);
       }
+      _encoder = Module._cimbar_encoder_create(0);
 
       Main.setTitle(filename);
       Main.setHTML("current-file", filename);
@@ -194,18 +142,7 @@ var Main = function () {
       requestWakeLock();
     },
 
-    encode_bytes: function (wasmData) {
-      var res = Module._cimbare_encode(wasmData.byteOffset, wasmData.length);
-      console.log("encode returned " + res);
-
-      if (res == 0) {
-        Main.setActive();
-      }
-    },
-
     dragDrop: function (event) {
-      console.log("drag drop?");
-      console.log(event);
       const files = event.dataTransfer.files;
       if (files && files.length === 1) {
         importFile(files[0]);
@@ -243,7 +180,6 @@ var Main = function () {
     },
 
     fileInput: function (ev) {
-      console.log("file input: " + ev);
       var file = document.getElementById('file_input').files[0];
       if (file) {
         importFile(file);
@@ -263,15 +199,48 @@ var Main = function () {
       if (_pause > 0) {
         _pause -= 1;
       }
-      if (!Main.isPaused()) {
-        Module._cimbare_render();
-        var frameCount = Module._cimbare_next_frame(_colorBalance);
+
+      if (_encoder == 0 || _imageW == 0 || Main.isPaused()) {
+        return;
       }
 
-      if (_showStats && frameCount) {
-        _renderTime += elapsed;
-        Main.setHTML("status", elapsed + " : " + frameCount + " : " + Math.ceil(_renderTime / frameCount));
+      var maxCells = _imageW * _imageH;
+      var cellsPtr = Module._malloc(maxCells * 2 + 4);
+      var numCellsPtr = cellsPtr + maxCells * 2;
+      Module.HEAPU32[numCellsPtr >> 2] = 0;
+
+      var result = Module._cimbar_encoder_encode_next_cells(_encoder, cellsPtr, maxCells, numCellsPtr);
+      var numCells = Module.HEAPU32[numCellsPtr >> 2];
+
+      if (result > 0 && numCells > 0) {
+        var rgbaSize = _imageW * _imageH * 4;
+        var rgbaPtr = Module._malloc(rgbaSize);
+        var outWPtr = Module._malloc(8);
+
+        Module._cimbar_render(cellsPtr, numCells, rgbaPtr, rgbaSize, outWPtr, outWPtr + 4);
+
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var imageData = ctx.createImageData(_imageW, _imageH);
+        var pixelView = new Uint8Array(Module.HEAPU8.buffer, rgbaPtr, rgbaSize);
+        imageData.data.set(pixelView);
+        ctx.putImageData(imageData, 0, 0);
+
+        Module._free(rgbaPtr);
+        Module._free(outWPtr);
+
+        if (_showStats) {
+          _renderTime += elapsed;
+          Main.setHTML("status", elapsed + " : " + result + " : " + Math.ceil(_renderTime / _counter));
+        }
       }
+      else if (result == 0) {
+        console.log("encode complete, " + _counter + " frames");
+        _encoder = 0;
+        _imageW = 0;
+      }
+
+      Module._free(cellsPtr);
 
       if (!Main.isPaused() && _counter % 16 == 0) {
         setTimeout(Main.prevent_sleep, 0);
@@ -279,7 +248,6 @@ var Main = function () {
     },
 
     setActive: function (active) {
-      // hide cursor when there's a barcode active
       var invisi = document.getElementById("invisible_click");
       invisi.classList.remove("active");
       invisi.classList.add("active");
@@ -296,9 +264,10 @@ var Main = function () {
       else if (mode_str == "Bm") {
         modeVal = 67;
       }
-      Module._cimbare_configure(modeVal, -1);
-      _idealRatio = Module._cimbare_get_aspect_ratio();
-      Main.resize();
+
+      if (_encoder) {
+        Module._cimbar_encoder_set_config(_encoder, CIMBAR_CFG_PRESET, modeVal);
+      }
 
       var nav = document.getElementById("nav-container");
       if (modeVal == 4) {
@@ -335,7 +304,6 @@ var Main = function () {
         return;
       }
       _interval = Math.floor(1000 / val);
-      console.log("new frame delay interval is " + _interval);
     },
 
     setHTML: function (id, msg) {

@@ -39,11 +39,9 @@ Crucially, because the encoder compiles to asmjs and wasm, it can run on anythin
 
 ## Library dependencies
 
-[OpenCV](https://opencv.org/) and [GLFW](https://github.com/glfw/glfw) (+ OpenGL ES headers) must be installed before building. All other dependencies are included in the source tree.
+[OpenCV](https://opencv.org/) must be installed before building. All other dependencies are included in the source tree.
 
 * opencv - https://opencv.org/ (`libopencv-dev`)
-* GLFW - https://github.com/glfw/glfw (`libglfw3-dev`)
-* GLES3/gl3.h - `libgles2-mesa-dev`
 * base - https://github.com/r-lyeh-archived/base
 * catch2 - https://github.com/catchorg/Catch2
 * concurrentqueue - https://github.com/cameron314/concurrentqueue
@@ -61,9 +59,9 @@ Crucially, because the encoder compiles to asmjs and wasm, it can run on anythin
 
 Requires [Meson](https://mesonbuild.com/) and [Ninja](https://ninja-build.org/).
 
-1. install opencv and GLFW. On ubuntu/debian, this looks like:
+1. install opencv. On ubuntu/debian, this looks like:
 ```
-sudo apt install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build
+sudo apt install libopencv-dev meson ninja-build
 ```
 
 2. configure and build
@@ -104,12 +102,12 @@ To build cimbar.js (what cimbar.org uses), see [WASM](WASM.md).
 libcimbar/
 ├── 3rdparty/       # vendored dependencies (zstd, wirehair, libcorrect, fmt, ...)
 ├── src/
-│   ├── support/    # infrastructure (bit I/O, text, OS, display)
+│   ├── support/    # infrastructure (bit I/O, text, OS)
 │   ├── imgproc/    # image processing (extraction, color, hashing)
 │   ├── core/       # codec (cell encode/decode, fountain, compression, RS)
 │   ├── pipeline/   # encode/decode pipelines (encoder, decoder)
 │   └── api/        # C API (libcimbar bindings)
-├── tools/          # CLI executables (cimbar, cimbar-send, cimbar-recv, ...)
+├── tools/          # CLI executables (cimbar, cimbar-extract, ...)
 ├── test/           # Catch2 unit tests
 ├── web/            # web frontend (cimbar.org)
 └── scripts/        # packaging scripts (WASM, portable Linux)
@@ -134,10 +132,7 @@ Decode a series of encoded images from stdin:
 echo outputprefix*.png | ./cimbar -o /tmp
 ```
 
-Encode and animate to window:
-```
-./cimbar_send inputfile.pdf
-```
+
 
 You can also encode a file using [cimbar.org](https://cimbar.org), or the latest [release](https://github.com/sz3/libcimbar/releases/latest).
 

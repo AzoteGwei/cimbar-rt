@@ -112,11 +112,9 @@ test_pipeline_exe = executable('test_pipeline',
 )
 test('pipeline', test_pipeline_exe)
 
-# ==================== API tests (cimbar_js + new C API) ====================
+# ==================== API tests (C API) ====================
 test_api_src = files(
   'api/test.cpp',
-  'api/cimbar_jsTest.cpp',
-  'api/cimbar_recv_jsTest.cpp',
   'api/cimbar_api_test.cpp',
 )
 

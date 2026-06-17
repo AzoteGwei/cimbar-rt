@@ -45,7 +45,7 @@ jobs:
           ccache-${{ matrix.config.os }}-
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install ccache libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build ${{ matrix.config.extra-packages }}
+      run: sudo apt-get update && sudo apt-get install ccache libopencv-dev meson ninja-build ${{ matrix.config.extra-packages }}
 
     - name: Configure ccache
       run: ccache --max-size=500M
@@ -90,7 +90,7 @@ jobs:
         submodules: 'recursive'
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build clang
+      run: sudo apt-get update && sudo apt-get install libopencv-dev meson ninja-build clang
 
     - name: Configure Meson with fuzz targets
       run: CXX="clang++" CC="clang" meson setup build-fuzz -Dfuzz=true --prefix ${{ github.workspace }}/dist

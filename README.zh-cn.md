@@ -39,11 +39,9 @@ APP并未使用互联网/蓝牙/NFC等，所有数据都是通过摄像头传输
 
 ## 依赖库
 
-[OpenCV](https://opencv.org/) 和 [GLFW](https://github.com/glfw/glfw) (+ OpenGL ES headers) 必须在构建前安装，所有其他依赖项都包含在源代码树中。
+[OpenCV](https://opencv.org/) 必须在构建前安装，所有其他依赖项都包含在源代码树中。
 
 * opencv - https://opencv.org/ (`libopencv-dev`)
-* GLFW - https://github.com/glfw/glfw (`libglfw3-dev`)
-* GLES3/gl3.h - `libgles2-mesa-dev`
 * base - https://github.com/r-lyeh-archived/base
 * catch2 - https://github.com/catchorg/Catch2
 * concurrentqueue - https://github.com/cameron314/concurrentqueue
@@ -61,9 +59,9 @@ APP并未使用互联网/蓝牙/NFC等，所有数据都是通过摄像头传输
 
 需要 [Meson](https://mesonbuild.com/) 和 [Ninja](https://ninja-build.org/)。
 
-1. 在 Ubuntu/Debian 上安装 opencv 和 GLFW 。如下：
+1. 在 Ubuntu/Debian 上安装 opencv 。如下：
 ```
-sudo apt install libopencv-dev libglfw3-dev libgles2-mesa-dev meson ninja-build
+sudo apt install libopencv-dev meson ninja-build
 ```
 
 2. 配置并构建
@@ -97,12 +95,12 @@ meson test -C build --verbose
 libcimbar/
 ├── 3rdparty/       # 第三方依赖 (zstd, wirehair, libcorrect, fmt, ...)
 ├── src/
-│   ├── support/    # 基础设施 (位读写、文本、系统、显示)
+│   ├── support/    # 基础设施 (位读写、文本、系统)
 │   ├── imgproc/    # 图像处理 (提取、色彩、哈希)
 │   ├── core/       # 编解码核心 (网格编解码、喷泉码、压缩、RS)
 │   ├── pipeline/   # 编码/解码管线
 │   └── api/        # C API 绑定
-├── tools/          # 命令行工具 (cimbar, cimbar-send, cimbar-recv, ...)
+├── tools/          # 命令行工具 (cimbar, cimbar-extract, ...)
 ├── test/           # Catch2 单元测试
 ├── web/            # 前端网页
 └── scripts/        # 打包脚本 (WASM, portable Linux)
@@ -127,10 +125,7 @@ libcimbar/
 echo outputprefix*.png | ./cimbar -o /tmp
 ```
 
-对窗口进行编码并设置动画：
-```
-./cimbar_send inputfile.pdf
-```
+
 
 您还可以使用 [cimbar.org](https://cimbar.org) 对文件进行编码，或最新的 [release](https://github.com/sz3/libcimbar/releases/latest).
 

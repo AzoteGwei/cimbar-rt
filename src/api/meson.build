@@ -1,4 +1,4 @@
-# ==================== C API implementation (was cimbar_js) ====================
+# ==================== C API implementation ====================
 api_deps = [
   core_codec_dep,
   core_compression_dep,
@@ -8,7 +8,6 @@ api_deps = [
   imgproc_extract_dep,
   support_os_dep,
   support_text_dep,
-  support_display_dep,
   correct_dep,
   wirehair_dep,
   zstd_dep,
@@ -18,16 +17,16 @@ api_deps = [
 
 if is_wasm
   # WASM: emit an executable with emscripten flags
-  wasm_sources = files('cimbar_js.cpp', 'cimbar_js.h')
-  if wasm_mode != 2
-    wasm_sources += files('cimbar_recv_js.cpp', 'cimbar_recv_js.h')
-  endif
+  wasm_sources = files('cimbar_api.cc')
 
   wasm_exported_fns = [
     '_malloc', '_free',
-    '_cimbare_render', '_cimbare_next_frame', '_cimbare_init_encode',
-    '_cimbare_encode', '_cimbare_encode_bufsize', '_cimbare_configure',
-    '_cimbare_rotate_window', '_cimbare_get_aspect_ratio',
+    '_cimbar_encoder_create', '_cimbar_encoder_destroy',
+    '_cimbar_encoder_set_config', '_cimbar_encoder_get_config',
+    '_cimbar_encoder_set_input',
+    '_cimbar_encoder_encode_next_cells',
+    '_cimbar_encoder_reset', '_cimbar_encoder_get_stats',
+    '_cimbar_render',
   ]
 
   if wasm_mode != 2
@@ -41,16 +40,12 @@ if is_wasm
   endif
 
   wasm_link_args = [
-    '--bind', '-Os',
-    '-s', 'USE_WEBGL2=1',
-    '-s', 'MIN_WEBGL_VERSION=2',
-    '-s', 'MAX_WEBGL_VERSION=2',
-    '-s', 'USE_GLFW=3',
+    '-Os',
     '-s', 'WASM_BIGINT=1',
     '-s', 'FILESYSTEM=0',
     '-s', 'TOTAL_MEMORY=134217728',
     '-s', 'EXPORTED_FUNCTIONS=[' + ','.join(wasm_exported_fns) + ']',
-    '-s', 'EXPORTED_RUNTIME_METHODS=[HEAPU8]',
+    '-s', 'EXPORTED_RUNTIME_METHODS=[HEAPU8,UTF8ToString,stringToUTF8]',
   ]
 
   if wasm_mode == 2
@@ -71,8 +66,6 @@ else
 
   # Native static library
   api_sources = files(
-    'cimbar_js.cpp', 'cimbar_js.h',
-    'cimbar_recv_js.cpp', 'cimbar_recv_js.h',
     'cimbar_api.cc',
   )
 
@@ -80,7 +73,7 @@ else
     api_sources,
     pic: true,
     include_directories: [src_inc, third_party_inc, pub_inc],
-    dependencies: api_deps + [glfw_dep, gl_dep],
+    dependencies: api_deps,
   )
 
   api_dep = declare_dependency(

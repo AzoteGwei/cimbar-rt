@@ -27,7 +27,7 @@ if [ -n "$BUILD" ]; then
 	# Order matters for static linking:
 	CIMBAR_LIBS="-lcimbar_js -lcimb_translator -lextractor -lwirehair -lzstd -lcorrect_static"
 
-	PKGS="opencv4 glfw3 gl"
+	PKGS="opencv4"
 	CFLAGS="-Wall -Wextra -std=c11 -g -O2 $CIMBAR_INC $(pkg-config --cflags $PKGS)"
 	LDFLAGS="$CIMBAR_LIB $CIMBAR_LIBS $(pkg-config --libs $PKGS) -lstdc++ -lm"
 
@@ -39,7 +39,7 @@ else
 	CIMBAR_INC="-I$PREFIX/include"
 	CIMBAR_LIB="-L$PREFIX/lib"
 
-	PKGS="opencv4 glfw3 gl"
+	PKGS="opencv4"
 	CFLAGS="-Wall -Wextra -std=c11 -g -O2 $CIMBAR_INC $(pkg-config --cflags $PKGS)"
 	LDFLAGS="$CIMBAR_LIB $(pkg-config --libs $PKGS) -lcimbar_js -lcimb_translator -lextractor -lwirehair -lzstd -lcorrect_static -lstdc++ -lm"
 

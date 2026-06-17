@@ -18,7 +18,6 @@ add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
 apt update
 apt install -y pkgconf g++-7 python3-pip ninja-build
-apt install -y libgles2-mesa-dev libglfw3-dev
 
 # meson + cmake (via pip)
 pip3 install meson cmake

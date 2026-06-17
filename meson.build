@@ -121,8 +121,7 @@ else
   cpp_fs_dep = dependency('', required: false)
 endif
 
-glfw_dep = dependency('glfw3', required: false)
-gl_dep = dependency('gl', required: false)
+
 
 # ==================== Include paths ====================
 src_inc = include_directories('src')
