@@ -60,7 +60,7 @@ jobs:
       run: meson test -C build --suite libcimbar --verbose
 
     - name: Usage test
-      working-directory: ${{runner.workspace}}/libcimbar/test/py
+      working-directory: ${{github.workspace}}/test/py
       run: python3 -m unittest
 
     - name: Upload artifacts

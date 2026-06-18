@@ -15,6 +15,8 @@ api_deps = [
   cpp_fs_dep,
 ]
 
+pub_inc = include_directories('../../include')
+
 if is_wasm
   # WASM: emit an executable with emscripten flags
   wasm_sources = files('cimbar_api.cc')
@@ -62,13 +64,11 @@ if is_wasm
   executable('cimbar_js',
     wasm_sources,
     dependencies: api_deps,
+    include_directories: [pub_inc],
     link_args: wasm_link_args,
     install: true,
   )
 else
-  # Public C API header path
-  pub_inc = include_directories('../../include')
-
   # Native static library
   api_sources = files(
     'cimbar_api.cc',
