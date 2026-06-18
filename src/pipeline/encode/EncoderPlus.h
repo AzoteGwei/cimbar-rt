@@ -24,11 +24,14 @@ class EncoderPlus : public Encoder
 public:
 	using Encoder::Encoder;
 
+#ifndef __EMSCRIPTEN__
 	unsigned encode(const std::string& filename, std::string output_prefix);
 	unsigned encode_fountain(const std::string& filename, std::string output_prefix, int compression_level=16, double redundancy=1.2);
+#endif
 	unsigned encode_fountain(const std::string& filename, const std::function<bool(const cv::Mat&, unsigned)>& on_frame, int compression_level=16, double redundancy=4.0);
 };
 
+#ifndef __EMSCRIPTEN__
 inline unsigned EncoderPlus::encode(const std::string& filename, std::string output_prefix)
 {
 	std::ifstream f(filename);
@@ -48,6 +51,7 @@ inline unsigned EncoderPlus::encode(const std::string& filename, std::string out
 	}
 	return i;
 }
+#endif
 
 inline unsigned EncoderPlus::encode_fountain(const std::string& filename, const std::function<bool(const cv::Mat&, unsigned)>& on_frame, int compression_level, double redundancy)
 {
@@ -93,6 +97,7 @@ inline unsigned EncoderPlus::encode_fountain(const std::string& filename, const 
 	return i;
 }
 
+#ifndef __EMSCRIPTEN__
 inline unsigned EncoderPlus::encode_fountain(const std::string& filename, std::string output_prefix, int compression_level, double redundancy)
 {
 	std::function<bool(const cv::Mat&, unsigned)> fun = [output_prefix] (const cv::Mat& frame, unsigned i) {
@@ -103,3 +108,4 @@ inline unsigned EncoderPlus::encode_fountain(const std::string& filename, std::s
 	};
 	return encode_fountain(filename, fun, compression_level, redundancy);
 }
+#endif

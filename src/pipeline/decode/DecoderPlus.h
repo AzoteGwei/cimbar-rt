@@ -20,12 +20,15 @@ public:
 	using Decoder::Decoder;
 	using Decoder::decode;
 
+#ifndef __EMSCRIPTEN__
 	unsigned decode(std::string filename, std::string output);
+#endif
 
 	bool load_ccm(std::string filename);
 	bool save_ccm(std::string filename);
 };
 
+#ifndef __EMSCRIPTEN__
 inline unsigned DecoderPlus::decode(std::string filename, std::string output)
 {
 	cv::Mat img = cv::imread(filename);
@@ -34,6 +37,7 @@ inline unsigned DecoderPlus::decode(std::string filename, std::string output)
 	std::ofstream f(output);
 	return Decoder::decode(img, f, false);
 }
+#endif
 
 inline bool DecoderPlus::load_ccm(std::string filename)
 {

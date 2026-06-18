@@ -136,7 +136,9 @@ CIMBAR_EXPORT int cimbar_encoder_get_config(const cimbar_encoder_t* encoder, cim
 
 // Input data
 CIMBAR_EXPORT int cimbar_encoder_set_input(cimbar_encoder_t* encoder, const void* data, size_t len, const char* filename);
+#ifndef __EMSCRIPTEN__
 CIMBAR_EXPORT int cimbar_encoder_set_input_file(cimbar_encoder_t* encoder, const char* path);
+#endif
 
 // Encode next frame as RGBA pixels
 // Returns 1 on success (frame written), 0 if no more frames (STREAM_END),
@@ -182,9 +184,11 @@ CIMBAR_EXPORT int cimbar_decoder_scan(cimbar_decoder_t* decoder,
                                       uint8_t* output, size_t* out_len);
 
 // Decode from image file path (png/bmp)
+#ifndef __EMSCRIPTEN__
 CIMBAR_EXPORT int cimbar_decoder_scan_file(cimbar_decoder_t* decoder,
                                            const char* path,
                                            uint8_t* output, size_t* out_len);
+#endif
 
 // Decode from pre-extracted cell grid (codec-only: cells -> data)
 CIMBAR_EXPORT int cimbar_decoder_decode_cells(cimbar_decoder_t* decoder,
@@ -201,7 +205,9 @@ CIMBAR_EXPORT int cimbar_decoder_fountain_feed(cimbar_decoder_t* decoder,
                                                unsigned width, unsigned height, cimbar_image_format_t format);
 
 // Feed one frame from file path
+#ifndef __EMSCRIPTEN__
 CIMBAR_EXPORT int cimbar_decoder_fountain_feed_file(cimbar_decoder_t* decoder, const char* path);
+#endif
 
 // Feed pre-extracted cell grid into fountain decoder
 CIMBAR_EXPORT int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* decoder,
@@ -236,9 +242,11 @@ CIMBAR_EXPORT int cimbar_decoder_dump(const cimbar_decoder_t* decoder, char* buf
 
 // Load an image file (png/bmp) into an RGBA buffer
 // Returns 1 on success, negative on error.
+#ifndef __EMSCRIPTEN__
 CIMBAR_EXPORT int cimbar_image_load(const char* path,
                                     uint8_t* rgba, size_t buf_size,
                                     unsigned* out_width, unsigned* out_height);
+#endif
 
 // Extract cell grid from an RGBA image (image processing: pixels -> cells)
 // Returns number of cells extracted, negative on error.

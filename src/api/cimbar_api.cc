@@ -390,6 +390,7 @@ int cimbar_encoder_set_input(cimbar_encoder_t* enc, const void* data, size_t len
 	return CIMBAR_OK;
 }
 
+#ifndef __EMSCRIPTEN__
 int cimbar_encoder_set_input_file(cimbar_encoder_t* enc, const char* path)
 {
 	if (!enc || !path) return CIMBAR_ERR_BAD_PARAM;
@@ -405,6 +406,7 @@ int cimbar_encoder_set_input_file(cimbar_encoder_t* enc, const char* path)
 	std::string fname = File::basename(path);
 	return cimbar_encoder_set_input(enc, data.data(), data.size(), fname.c_str());
 }
+#endif
 
 int cimbar_encoder_encode_next(cimbar_encoder_t* enc, uint8_t* rgba, size_t buf_size, unsigned* out_w, unsigned* out_h)
 {
@@ -657,6 +659,7 @@ int cimbar_decoder_scan(cimbar_decoder_t* dec, const uint8_t* image_data, size_t
 	return do_decode_image(dec, deskewed, output, out_len);
 }
 
+#ifndef __EMSCRIPTEN__
 int cimbar_decoder_scan_file(cimbar_decoder_t* dec, const char* path, uint8_t* output, size_t* out_len)
 {
 	if (!dec || !path || !output || !out_len)
@@ -676,6 +679,7 @@ int cimbar_decoder_scan_file(cimbar_decoder_t* dec, const char* path, uint8_t* o
 
 	return do_decode_image(dec, deskewed, output, out_len);
 }
+#endif
 
 int cimbar_decoder_decode_cells(cimbar_decoder_t* dec, const cimbar_cell_t* cells, size_t num_cells,
 								uint8_t* output, size_t* out_len)
@@ -796,6 +800,7 @@ int cimbar_decoder_fountain_feed(cimbar_decoder_t* dec, const uint8_t* image_dat
 	return 1;
 }
 
+#ifndef __EMSCRIPTEN__
 int cimbar_decoder_fountain_feed_file(cimbar_decoder_t* dec, const char* path)
 {
 	if (!dec || !path) return CIMBAR_ERR_BAD_PARAM;
@@ -810,6 +815,7 @@ int cimbar_decoder_fountain_feed_file(cimbar_decoder_t* dec, const char* path)
 	return cimbar_decoder_fountain_feed(dec, img_rgb.data, img_rgb.total() * img_rgb.elemSize(),
 	                                   img_rgb.cols, img_rgb.rows, CIMBAR_IMAGE_RGB);
 }
+#endif
 
 int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* dec, const cimbar_cell_t* cells, size_t num_cells)
 {
@@ -945,6 +951,7 @@ int cimbar_decoder_dump(const cimbar_decoder_t* dec, char* buf, size_t len)
 // Standalone utility implementations
 // =========================================================================
 
+#ifndef __EMSCRIPTEN__
 int cimbar_image_load(const char* path, uint8_t* rgba, size_t buf_size, unsigned* out_w, unsigned* out_h)
 {
 	if (!path || !rgba) return CIMBAR_ERR_BAD_PARAM;
@@ -958,6 +965,7 @@ int cimbar_image_load(const char* path, uint8_t* rgba, size_t buf_size, unsigned
 
 	return mat_to_rgba(img_rgb, rgba, buf_size, out_w, out_h);
 }
+#endif
 
 int cimbar_extract_cells(const uint8_t* image_data, size_t data_len,
 						 unsigned width, unsigned height, cimbar_image_format_t format,
