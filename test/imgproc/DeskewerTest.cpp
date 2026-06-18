@@ -11,6 +11,8 @@
 
 #include "DeskewerPlus.h"
 #include "imgproc/hash/average_hash.h"
+#include "support/image/cv_bridge.h"
+#include <opencv2/opencv.hpp>
 #include <string>
 
 TEST_CASE( "DeskewerTest/testSimple", "[unit]" )
@@ -18,10 +20,13 @@ TEST_CASE( "DeskewerTest/testSimple", "[unit]" )
 	Corners corners({312, 519}, {323, 2586}, {2405, 461}, {2425, 2594});
 	DeskewerPlus de(0, {1024, 1024}, 30);
 
-	cv::Mat actual = de.deskew(TestCimbar::getSample("6bit/4_30_f0_big.jpg"), corners);
-	assertEquals(cv::Size(1024, 1024), actual.size());
+	Image actual = de.deskew(TestCimbar::getSample("6bit/4_30_f0_big.jpg"), corners);
+	assertEquals(1024, (int)actual.cols);
+	assertEquals(1024, (int)actual.rows);
 
-	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(actual) );
+	cv::Mat actual_mat;
+	cv_bridge::image_to_mat(actual, &actual_mat);
+	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(actual_mat) );
 }
 
 TEST_CASE( "DeskewerTest/testPadded", "[unit]" )
@@ -29,13 +34,13 @@ TEST_CASE( "DeskewerTest/testPadded", "[unit]" )
 	Corners corners({312, 519}, {323, 2586}, {2405, 461}, {2425, 2594});
 	DeskewerPlus de(8, {1024, 1024}, 30);
 
-	cv::Mat actual = de.deskew(TestCimbar::getSample("6bit/4_30_f0_big.jpg"), corners);
-	assertEquals(cv::Size(1040, 1040), actual.size());
+	Image actual = de.deskew(TestCimbar::getSample("6bit/4_30_f0_big.jpg"), corners);
+	assertEquals(1040, (int)actual.cols);
+	assertEquals(1040, (int)actual.rows);
 
-	cv::Rect crop(8, 8, 1024, 1024);
-	cv::Mat innerGrid = actual(crop);
+	Image innerGrid = actual.roi(8, 8, 1024, 1024);
 
-	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(innerGrid) );
+	cv::Mat inner_mat;
+	cv_bridge::image_to_mat(innerGrid, &inner_mat);
+	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(inner_mat) );
 }
-
-

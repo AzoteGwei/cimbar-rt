@@ -16,7 +16,6 @@
 #include "core/codec/Interleave.h"
 #include "support/os/null_stream.h"
 
-#include <opencv2/opencv.hpp>
 #include <functional>
 #include <string>
 
@@ -25,11 +24,11 @@ class Decoder
 public:
 	Decoder(bool use_ecc=true, bool interleave=true);
 
-	template <typename MAT, typename STREAM>
-	unsigned decode(const MAT& img, STREAM& ostream, bool should_preprocess=false, int color_correction=2);
+	template <typename STREAM>
+	unsigned decode(const Image& img, STREAM& ostream, bool should_preprocess=false, int color_correction=2);
 
-	template <typename MAT, typename STREAM>
-	unsigned decode_fountain(const MAT& img, STREAM& ostream, bool should_preprocess=false, int color_correction=2);
+	template <typename STREAM>
+	unsigned decode_fountain(const Image& img, STREAM& ostream, bool should_preprocess=false, int color_correction=2);
 
 protected:
 	template <typename STREAM>
@@ -167,15 +166,15 @@ inline unsigned Decoder::do_decode_coupled(CimbReader& reader, STREAM& ostream)
 	return bb.flush(rss);
 }
 
-template <typename MAT, typename STREAM>
-inline unsigned Decoder::decode(const MAT& img, STREAM& ostream, bool should_preprocess, int color_correction)
+template <typename STREAM>
+inline unsigned Decoder::decode(const Image& img, STREAM& ostream, bool should_preprocess, int color_correction)
 {
 	CimbReader reader(img, _decoder, cimbar::Config::color_mode(), should_preprocess, color_correction);
 	return do_decode(reader, ostream);
 }
 
-template <typename MAT, typename FOUNTAINSTREAM>
-inline unsigned Decoder::decode_fountain(const MAT& img, FOUNTAINSTREAM& ostream, bool should_preprocess, int color_correction)
+template <typename FOUNTAINSTREAM>
+inline unsigned Decoder::decode_fountain(const Image& img, FOUNTAINSTREAM& ostream, bool should_preprocess, int color_correction)
 {
 	CimbReader reader(img, _decoder, cimbar::Config::color_mode(), should_preprocess, color_correction);
 	unsigned chunk_size = cimbar::Config::fountain_chunk_size();

@@ -35,7 +35,7 @@ core_codec_lib = static_library('cimb_translator',
   ],
   dependencies: [
     opencv_dep,
-    support_os_dep, support_bit_dep, support_text_dep,
+    support_os_dep, support_bit_dep, support_text_dep, support_image_dep,
     imgproc_hash_dep, imgproc_color_dep,
     core_fountain_dep,
   ],

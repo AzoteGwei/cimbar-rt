@@ -13,8 +13,8 @@
 #include "imgproc/extract/Scanner.h"
 #include "support/text/format.h"
 #include "support/os/File.h"
+#include "support/image/cv_bridge.h"
 
-#include <opencv2/opencv.hpp>
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -28,7 +28,7 @@ public:
 	unsigned encode(const std::string& filename, std::string output_prefix);
 	unsigned encode_fountain(const std::string& filename, std::string output_prefix, int compression_level=16, double redundancy=1.2);
 #endif
-	unsigned encode_fountain(const std::string& filename, const std::function<bool(const cv::Mat&, unsigned)>& on_frame, int compression_level=16, double redundancy=4.0);
+	unsigned encode_fountain(const std::string& filename, const std::function<bool(const Image&, unsigned)>& on_frame, int compression_level=16, double redundancy=4.0);
 };
 
 #ifndef __EMSCRIPTEN__
@@ -44,16 +44,14 @@ inline unsigned EncoderPlus::encode(const std::string& filename, std::string out
 			break;
 
 		std::string output = fmt::format("{}_{}.png", output_prefix, i);
-		// imwrite expects BGR
-		cv::cvtColor(*frame, *frame, cv::COLOR_RGB2BGR);
-		cv::imwrite(output, *frame);
+		cv_bridge::imwrite(output, *frame);
 		++i;
 	}
 	return i;
 }
 #endif
 
-inline unsigned EncoderPlus::encode_fountain(const std::string& filename, const std::function<bool(const cv::Mat&, unsigned)>& on_frame, int compression_level, double redundancy)
+inline unsigned EncoderPlus::encode_fountain(const std::string& filename, const std::function<bool(const Image&, unsigned)>& on_frame, int compression_level, double redundancy)
 {
 	std::ifstream infile(filename, std::ios::binary);
 	fountain_encoder_stream::ptr fes = create_fountain_encoder(infile, File::basename(filename), compression_level);
@@ -100,11 +98,9 @@ inline unsigned EncoderPlus::encode_fountain(const std::string& filename, const 
 #ifndef __EMSCRIPTEN__
 inline unsigned EncoderPlus::encode_fountain(const std::string& filename, std::string output_prefix, int compression_level, double redundancy)
 {
-	std::function<bool(const cv::Mat&, unsigned)> fun = [output_prefix] (const cv::Mat& frame, unsigned i) {
+	std::function<bool(const Image&, unsigned)> fun = [output_prefix] (const Image& frame, unsigned i) {
 		std::string output = fmt::format("{}_{}.png", output_prefix, i);
-		cv::Mat bgr;
-		cv::cvtColor(frame, bgr, cv::COLOR_RGB2BGR);
-		return cv::imwrite(output, bgr);
+		return cv_bridge::imwrite(output, frame);
 	};
 	return encode_fountain(filename, fun, compression_level, redundancy);
 }

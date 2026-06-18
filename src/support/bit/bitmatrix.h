@@ -9,6 +9,7 @@
 #pragma once
 
 #include "bitbuffer.h"
+#include "support/image/Image.h"
 #include <opencv2/opencv.hpp>
 
 // wraps/inherits bitbuffer
@@ -18,10 +19,10 @@ class bitmatrix
 {
 public:
 	template <typename BITSTREAM>
-	static void mat_to_bitbuffer(const cv::Mat& img, BITSTREAM&& writer)
+	static void mat_to_bitbuffer(const Image& img, BITSTREAM&& writer)
 	{
-		const uchar* p = img.ptr<uchar>(0);
-		unsigned size = img.cols * img.rows;
+		const uint8_t* p = img.ptr(0);
+		unsigned size = img.width * img.height;
 		while (size >= 8)
 		{
 			// we're turning 1 uint64_t into 8 uint8_ts
@@ -40,6 +41,39 @@ public:
 		}
 
 		// remainder
+		if (size > 0)
+		{
+			uint8_t val = 0;
+			while (size > 0) {
+				val |= (*p > 0) << size;
+				++p;
+				--size;
+			}
+			writer << val;
+		}
+	}
+
+	// ponytail: cv::Mat 兼容重载，过渡期使用
+	template <typename BITSTREAM>
+	static void mat_to_bitbuffer(const cv::Mat& img, BITSTREAM&& writer)
+	{
+		const uchar* p = img.ptr<uchar>(0);
+		unsigned size = img.cols * img.rows;
+		while (size >= 8)
+		{
+			uint64_t mval;
+			memcpy(&mval, p, sizeof mval);
+			mval = mval & 0x101010101010101ULL;
+			const uint8_t* cv = reinterpret_cast<const uint8_t*>(&mval);
+			uint8_t val = (
+				cv[0] << 7 | cv[1] << 6 | cv[2] << 5 | cv[3] << 4 | cv[4] << 3 | cv[5] << 2 |
+				cv[6] << 1 | cv[7]
+			);
+			writer << val;
+			p += 8;
+			size -= 8;
+		}
+
 		if (size > 0)
 		{
 			uint8_t val = 0;

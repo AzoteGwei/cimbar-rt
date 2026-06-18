@@ -11,6 +11,7 @@
 
 #include "Cell.h"
 #include "Common.h"
+#include "support/image/cv_bridge.h"
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -21,7 +22,9 @@ using std::string;
 
 TEST_CASE( "CellTest/testRgbMatchesOpenCV", "[unit]" )
 {
-	cv::Mat cell = TestCimbar::loadSample("mycell.png");
+	Image sample = TestCimbar::loadSample("mycell.png");
+	cv::Mat cell;
+	cv_bridge::image_to_mat(sample, &cell);
 	cv::Scalar expectedColor = cv::mean(cell);
 
 	auto [r, g, b] = Cell(cell).mean_rgb();
@@ -42,7 +45,9 @@ TEST_CASE( "CellTest/testRgbMatchesOpenCV", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample2 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	cv::Mat img;
+	cv_bridge::image_to_mat(sample2, &img);
 
 	cv::Rect crop(125, 8, 8, 8);
 	cv::Mat cell = img(crop);
@@ -66,7 +71,9 @@ TEST_CASE( "CellTest/testRgbCellOffsets", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Contiguous", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample3 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	cv::Mat img;
+	cv_bridge::image_to_mat(sample3, &img);
 
 	cv::Rect crop(125, 8, 8, 8);
 	cv::Mat cell = img(crop);
@@ -90,7 +97,9 @@ TEST_CASE( "CellTest/testRgbCellOffsets.Contiguous", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample4 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	cv::Mat img;
+	cv_bridge::image_to_mat(sample4, &img);
 
 	cv::Rect crop(125, 8, 4, 6);
 	cv::Mat cell = img(crop);
@@ -113,7 +122,9 @@ TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric.Contiguous", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample5 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	cv::Mat img;
+	cv_bridge::image_to_mat(sample5, &img);
 
 	cv::Rect crop(126, 9, 6, 6);
 	cv::Mat cell = img(crop);

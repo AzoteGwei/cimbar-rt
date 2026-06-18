@@ -14,6 +14,7 @@
 #include "support/bit/bitmatrix.h"
 #include "core/codec/CellDrift.h"
 #include "core/codec/Common.h"
+#include "support/image/Image.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
@@ -52,8 +53,9 @@ namespace {
 
 TEST_CASE( "fuzzyAhashTest/testCorrectness5", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(2, 0, true);
-	cv::Mat tenxten = embedTile5x5(tile);
+	Image tile = cimbar::getTile(2, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile5x5(tileMat);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -76,8 +78,9 @@ TEST_CASE( "fuzzyAhashTest/testCorrectness5", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testCorrectness8", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(4, 0, true);
-	cv::Mat tenxten = embedTile8x8(tile);
+	Image tile = cimbar::getTile(4, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile8x8(tileMat);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -100,8 +103,9 @@ TEST_CASE( "fuzzyAhashTest/testCorrectness8", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testIterator", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(4, 0, true);
-	cv::Mat tenxten = embedTile8x8(tile);
+	Image tile = cimbar::getTile(4, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile8x8(tileMat);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -140,8 +144,9 @@ TEST_CASE( "fuzzyAhashTest/testIterator", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testPreThreshold", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(4, 0, true);
-	cv::Mat tenxten = embedTile8x8(tile, true);
+	Image tile = cimbar::getTile(4, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile8x8(tileMat, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -164,8 +169,9 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(4, 0, true);
-	cv::Mat tenxten = embedTile8x8(tile, true);
+	Image tile = cimbar::getTile(4, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile8x8(tileMat, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -193,8 +199,9 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix8.Fast", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(4, 0, true);
-	cv::Mat tenxten = embedTile8x8(tile, true);
+	Image tile = cimbar::getTile(4, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile8x8(tileMat, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
@@ -228,8 +235,9 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix8.Fast", "[unit]" )
 
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix5.Fast", "[unit]" )
 {
-	cv::Mat tile = cimbar::getTile(2, 0, true);
-	cv::Mat tenxten = embedTile5x5(tile, true);
+	Image tile = cimbar::getTile(2, 0, true);
+	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+	cv::Mat tenxten = embedTile5x5(tileMat, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;

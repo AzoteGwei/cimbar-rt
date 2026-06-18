@@ -13,6 +13,7 @@
 
 #include "core/codec/CimbDecoder.h"
 #include "support/text/format.h"
+#include "support/image/Image.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
@@ -43,7 +44,7 @@ namespace {
 
 TEST_CASE( "CimbReaderTest/testReadOnce", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
 	CimbDecoder decoder(4, 2);
 	CimbReader cr(sample, decoder, 1);
@@ -66,7 +67,7 @@ TEST_CASE( "CimbReaderTest/testReadOnce", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testSample.colormode0", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
 	CimbDecoder decoder(4, 2);
 	CimbReader cr(sample, decoder, 0);
@@ -102,7 +103,7 @@ TEST_CASE( "CimbReaderTest/testSample.colormode0", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testSample.colormode1", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image sample = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
 	CimbDecoder decoder(4, 2);
 	CimbReader cr(sample, decoder, 1);
@@ -139,7 +140,7 @@ TEST_CASE( "CimbReaderTest/testSample.colormode1", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testSampleMessy", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("6bit/4_30_f0_627_extract.jpg");
+	Image sample = TestCimbar::loadSample("6bit/4_30_f0_627_extract.jpg");
 
 	CimbDecoder decoder(4, 2);
 	CimbReader cr(sample, decoder, 1);
@@ -173,7 +174,7 @@ TEST_CASE( "CimbReaderTest/testBad", "[unit]" )
 {
 	// this is a non-extracted image, and it's dimensions are too small.
 	// should immediately bail
-	cv::Mat sample = TestCimbar::loadSample("6bit/4_30_f2_246.jpg");
+	Image sample = TestCimbar::loadSample("6bit/4_30_f2_246.jpg");
 
 	CimbDecoder decoder(4, 2);
 	CimbReader cr(sample, decoder, 1);
@@ -189,7 +190,7 @@ TEST_CASE( "CimbReaderTest/testBad", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testCCM", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("b/ex2434.jpg");
+	Image sample = TestCimbar::loadSample("b/ex2434.jpg");
 
 	TestableCimbDecoder decoder(4, 2);
 	decoder.internal_ccm() = color_correction();
@@ -223,7 +224,7 @@ TEST_CASE( "CimbReaderTest/testCCM", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testCCM.Disabled", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("b/ex2434.jpg");
+	Image sample = TestCimbar::loadSample("b/ex2434.jpg");
 
 	TestableCimbDecoder decoder(4, 2);
 	decoder.internal_ccm() = color_correction();
@@ -245,7 +246,7 @@ TEST_CASE( "CimbReaderTest/testCCM.Disabled", "[unit]" )
 
 TEST_CASE( "CimbReaderTest/testCCM.VeryNecessary", "[unit]" )
 {
-	cv::Mat sample = TestCimbar::loadSample("b/ex380.jpg");
+	Image sample = TestCimbar::loadSample("b/ex380.jpg");
 
 	TestableCimbDecoder decoder(4, 2);
 	decoder.internal_ccm() = color_correction();

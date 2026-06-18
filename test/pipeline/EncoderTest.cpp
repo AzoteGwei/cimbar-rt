@@ -17,6 +17,7 @@
 #include "core/codec/ConfigScope.h"
 #include "support/os/File.h"
 #include "support/os/MakeTempDirectory.h"
+#include "support/image/cv_bridge.h"
 
 #include <iostream>
 #include <sstream>
@@ -133,11 +134,13 @@ TEST_CASE( "EncoderTest/testPiecemealFountainEncoder", "[unit]" )
 	fountain_encoder_stream::ptr fes = enc.create_fountain_encoder(bis, "LICENSE.txt");
 	assertTrue( fes );
 
-	std::optional<cv::Mat> frame = enc.encode_next(*fes);
+	std::optional<Image> frame = enc.encode_next(*fes);
 	assertTrue( frame );
 
 	uint64_t hash = 0xef84e600f4defa9;
-	assertEquals( hash, image_hash::average_hash(*frame) );
+	cv::Mat frameMat;
+	cv_bridge::image_to_mat(*frame, &frameMat);
+	assertEquals( hash, image_hash::average_hash(frameMat) );
 }
 
 TEST_CASE( "EncoderTest/testFountain.Size", "[unit]" )

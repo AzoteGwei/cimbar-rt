@@ -11,11 +11,12 @@
 #include "Config.h"
 #include "base91/base.hpp"
 #include "support/text/format.h"
+#include "support/image/cv_bridge.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
-#include <opencv2/opencv.hpp>
 
 #include <map>
+#include <memory>
 #include <string>
 #include "bitmaps.h"
 
@@ -27,7 +28,6 @@ using std::vector;
 namespace {
 	RGB getColor4(unsigned index)
 	{
-		// opencv uses BGR, but we don't have to conform to its tyranny
 		static constexpr array<RGB, 4> colors = {
 			RGB(0, 0xFF, 0),
 			RGB(0, 0xFF, 0xFF),
@@ -39,7 +39,6 @@ namespace {
 
 	RGB getColor4_enc(unsigned index)
 	{
-		// opencv uses BGR, but we don't have to conform to its tyranny
 		static constexpr array<RGB, 4> colors = {
 			RGB(0, 0xFF, 0),
 			RGB(0, 0xFF, 0xFF),
@@ -92,7 +91,6 @@ namespace {
 
 	RGB getBgColor4(unsigned index)
 	{
-		// opencv uses BGR, but we don't have to conform to its tyranny
 		static constexpr array<RGB, 4> colors = {
 			RGB(0, 0x20, 0),
 			RGB(0, 0, 0xFF),
@@ -105,11 +103,11 @@ namespace {
 
 namespace cimbar {
 
-cv::Mat load_img(string path)
+Image load_img(string path)
 {
 	auto it = cimbar::bitmaps.find(path);
 	if (it == cimbar::bitmaps.end())
-		return cv::Mat();
+		return {};
 
 	string bytes = base91::decode(it->second);
 	vector<unsigned char> data(bytes.data(), bytes.data() + bytes.size());
@@ -117,13 +115,15 @@ cv::Mat load_img(string path)
 	int width, height, channels;
 	std::unique_ptr<uint8_t[], void (*)(void*)> imgdata(stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &width, &height, &channels, STBI_rgb_alpha), ::free);
 	if (!imgdata)
-		return cv::Mat();
+		return {};
 
-	size_t len = width * height * channels;
-	cv::Mat mat(height, width, CV_MAKETYPE(CV_8U, channels));
-	std::copy(imgdata.get(), imgdata.get()+len, mat.data);
-	cv::cvtColor(mat, mat, cv::COLOR_RGBA2RGB);
-	return mat;
+	// stbi_load returns RGBA (4 channels), convert to RGB
+	Image rgba(width, height, 4);
+	std::memcpy(rgba.data, imgdata.get(), width * height * 4);
+
+	Image rgb;
+	cv_bridge::cvt_color(rgba, rgb, cv_bridge::COLOR_RGBA2RGB);
+	return rgb;
 }
 
 RGB getColor(unsigned index, unsigned num_colors, unsigned color_mode)
@@ -154,25 +154,35 @@ RGB getBgColor(unsigned index, unsigned num_colors, unsigned color_mode)
 		return RGB(0,0,0);
 }
 
-cv::Mat getTile(unsigned symbol_bits, unsigned symbol, bool dark, unsigned num_colors, unsigned color, unsigned color_mode)
+Image getTile(unsigned symbol_bits, unsigned symbol, bool dark, unsigned num_colors, unsigned color, unsigned color_mode)
 {
-	static cv::Vec3b background({0xFF, 0xFF, 0xFF});
+	static uint8_t bg_r = 0xFF, bg_g = 0xFF, bg_b = 0xFF;
 
 	string imgPath = fmt::format("bitmap/{}/{:02x}.png", symbol_bits, symbol);
-	cv::Mat tile = load_img(imgPath);
+	Image tile = load_img(imgPath);
 
-	uchar r, g, b;
-	std::tie(r, g, b) = getColor(color, num_colors, color_mode);
-	uchar bgr, bgg, bgb;
-	std::tie(bgr, bgg, bgb) = getBgColor(color, num_colors, color_mode);
-	cv::MatIterator_<cv::Vec3b> end = tile.end<cv::Vec3b>();
-	for (cv::MatIterator_<cv::Vec3b> it = tile.begin<cv::Vec3b>(); it != end; ++it)
+	auto [r, g, b] = getColor(color, num_colors, color_mode);
+	auto [bgr, bgg, bgb] = getBgColor(color, num_colors, color_mode);
+
+	for (unsigned y = 0; y < tile.height; ++y)
 	{
-		cv::Vec3b& c = *it;
-		if (c != background)
-			c = {r, g, b};
-		else if (dark)
-			c = {bgr, bgg, bgb};
+		uint8_t* row = tile.ptr(y);
+		for (unsigned x = 0; x < tile.width; ++x)
+		{
+			uint8_t* px = row + x * 3;
+			if (px[0] != bg_r || px[1] != bg_g || px[2] != bg_b)
+			{
+				px[0] = r;
+				px[1] = g;
+				px[2] = b;
+			}
+			else if (dark)
+			{
+				px[0] = bgr;
+				px[1] = bgg;
+				px[2] = bgb;
+			}
+		}
 	}
 	return tile;
 }

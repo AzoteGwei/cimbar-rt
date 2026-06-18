@@ -19,6 +19,7 @@
 #include "core/codec/ConfigScope.h"
 #include "support/os/File.h"
 #include "support/os/MakeTempDirectory.h"
+#include "support/image/cv_bridge.h"
 
 #include <iostream>
 #include <string>
@@ -45,12 +46,14 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.Pad", "[unit]" )
 	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
 	assertEquals( hash, image_hash::average_hash(encodedImg) );
 
+	Image encodedForDecode = cv_bridge::clone_from_mat(encodedImg);
+
 	SECTION ("default filename") {
 		// decoder
 		Decoder dec;
 		fountain_decoder_sink fds(cimbar::Config::fountain_chunk_size(), write_on_store<cimbar::zstd_decompressor<std::ofstream>>(tempdir.path()));
 
-		unsigned bytesDecoded = dec.decode_fountain(encodedImg, fds);
+		unsigned bytesDecoded = dec.decode_fountain(encodedForDecode, fds);
 		assertEquals( 7500, bytesDecoded );
 
 		std::string decodedContents = File(tempdir.path() / "0.626").read_all();
@@ -63,7 +66,7 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.Pad", "[unit]" )
 		Decoder dec;
 		fountain_decoder_sink fds(cimbar::Config::fountain_chunk_size(), decompress_on_store<std::ofstream>(tempdir.path()));
 
-		unsigned bytesDecoded = dec.decode_fountain(encodedImg, fds);
+		unsigned bytesDecoded = dec.decode_fountain(encodedForDecode, fds);
 		assertEquals( 7500, bytesDecoded );
 
 		std::string decodedContents = File(tempdir.path() / "hello.txt").read_all();
@@ -96,6 +99,8 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.SinkMismatch", "[unit]" )
 	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
 	assertEquals( hash, image_hash::average_hash(encodedImg) );
 
+	Image encodedForDecode = cv_bridge::clone_from_mat(encodedImg);
+
 	// decoder
 	Decoder dec;
 	// sink with a mismatched fountain_chunk_size
@@ -103,7 +108,7 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.SinkMismatch", "[unit]" )
 	// because that's a more interesting test...
 	fountain_decoder_sink fds(cimbar::Config::fountain_chunk_size()-125, write_on_store<cimbar::zstd_decompressor<std::ofstream>>(tempdir.path()));
 
-	unsigned bytesDecoded = dec.decode_fountain(encodedImg, fds);
+	unsigned bytesDecoded = dec.decode_fountain(encodedForDecode, fds);
 	assertEquals( 7500, bytesDecoded );
 
 	assertEquals( 0, fds.num_done() );
@@ -129,7 +134,7 @@ TEST_CASE( "EncoderRoundTripTest/testStreaming", "[unit]" )
 	// encode frames, then pass to decoder
 	for (int i = 0; i < 100; ++i)
 	{
-		std::optional<cv::Mat> frame = enc.encode_next(*fes);
+		std::optional<Image> frame = enc.encode_next(*fes);
 		assertTrue( frame );
 
 		unsigned bytesDecoded = dec.decode_fountain(*frame, fds);

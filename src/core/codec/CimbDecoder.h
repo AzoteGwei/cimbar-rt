@@ -14,7 +14,7 @@
 #include "imgproc/hash/ahash_result.h"
 #include "imgproc/hash/average_hash.h"
 #include "support/os/compiler_constants.h"
-#include <opencv2/opencv.hpp>
+#include "support/image/Image.h"
 #include <cstdint>
 #include <string>
 
@@ -27,7 +27,7 @@ public:
 	void update_color_correction(cv::Matx<float, 3, 3>&& ccm);
 
 	unsigned get_best_symbol(image_hash::ahash_result<cimbar::Config::cell_size()>& results, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;
-	unsigned decode_symbol(const cv::Mat& cell, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;
+	unsigned decode_symbol(const Image& cell, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;
 	CIMBAR_FLATTEN unsigned decode_symbol(const bitmatrix& cell, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;
 
 	std::tuple<uchar,uchar,uchar> get_color(int i, unsigned color_mode) const;

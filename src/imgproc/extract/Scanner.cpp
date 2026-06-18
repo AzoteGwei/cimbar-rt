@@ -57,7 +57,7 @@ int Scanner::anchor_size() const
 
 bool Scanner::test_pixel(int x, int y) const
 {
-	uchar pixel = _img.at<uchar>(y, x);
+	uint8_t pixel = _img.ptr(y)[x];
 	if (_dark)
 		return pixel > 127;
 	else

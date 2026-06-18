@@ -9,7 +9,7 @@
 #pragma once
 
 #include "DistortionParameters.h"
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 template <typename CAMERA_CALIBRATOR>
 class Undistort
@@ -28,16 +28,15 @@ public:
 		return CAMERA_CALIBRATOR().scan(img);
 	}
 
-	template <typename MAT>
-	bool undistort(const MAT& img, MAT& out)
+	bool undistort(const Image& img, Image& out)
 	{
-		if (!_params)
+		if (_maps.empty())
 		{
-			if ( !set_distortion_params(img.cols, img.rows, get_distortion_parameters(img)) )
+			if ( !set_distortion_params(img.width, img.height, get_distortion_parameters(img)) )
 				return false;
 		}
 
-		cv::remap(img, out, _map1, _map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+		cv_bridge::remap(img, out, _maps);
 		return true;
 	}
 
@@ -47,19 +46,20 @@ public:
 			return false;
 
 		_params = params;
-		cv::initUndistortRectifyMap(_params.camera, _params.distortion, cv::Mat(), _params.camera, cv::Size(width, height), CV_32FC1, _map1, _map2);
+		_maps = cv_bridge::init_undistort_rectify_map(
+			reinterpret_cast<const double*>(_params.camera.data),
+			reinterpret_cast<const double*>(_params.distortion.data),
+			width, height);
 		return true;
 	}
 
 	void reset_distortion_params()
 	{
 		_params = {};
-		_map1.release();
-		_map2.release();
+		_maps = {};
 	}
 
 protected:
 	DistortionParameters _params;
-	cv::Mat _map1;
-	cv::Mat _map2;
+	cv_bridge::DistortionMap _maps;
 };

@@ -23,8 +23,7 @@
 #include "pipeline/encode/EncoderPlus.h"
 #include "support/text/format.h"
 #include "support/os/File.h"
-
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 #include <cstring>
 #include <memory>
@@ -89,65 +88,71 @@ namespace {
 
 namespace {
 
-	int mat_to_rgba(const cv::Mat& mat, uint8_t* rgba, size_t buf_size, unsigned* out_w, unsigned* out_h)
+	int image_to_rgba(const Image& img, uint8_t* rgba, size_t buf_size, unsigned* out_w, unsigned* out_h)
 	{
-		cv::Mat rgb;
-		if (mat.channels() == 4)
-			cv::cvtColor(mat, rgb, cv::COLOR_RGBA2RGB);
-		else if (mat.channels() == 3)
-			rgb = mat.clone();
+		Image rgb;
+		if (img.channels() == 4)
+			cv_bridge::cvt_color(img, rgb, cv_bridge::COLOR_RGBA2RGB);
+		else if (img.channels() == 3)
+			rgb = img.clone();
 		else
-			cv::cvtColor(mat, rgb, cv::COLOR_GRAY2RGB);
+			cv_bridge::cvt_color(img, rgb, cv_bridge::COLOR_GRAY2RGB);
 
-		unsigned w = rgb.cols;
-		unsigned h = rgb.rows;
+		unsigned w = rgb.width;
+		unsigned h = rgb.height;
 		size_t needed = (size_t)w * h * 4;
 		if (buf_size < needed)
 			return CIMBAR_ERR_NOMEM;
 
-		cv::Mat rgba_mat(h, w, CV_8UC4, rgba);
-		cv::cvtColor(rgb, rgba_mat, cv::COLOR_RGB2RGBA);
+		Image rgba_img;
+		cv_bridge::cvt_color(rgb, rgba_img, cv_bridge::COLOR_RGB2RGBA);
+		std::memcpy(rgba, rgba_img.data, needed);
 
 		if (out_w) *out_w = w;
 		if (out_h) *out_h = h;
 		return (int)needed;
 	}
 
-	cv::Mat raw_to_mat(const uint8_t* data, unsigned w, unsigned h, cimbar_image_format_t fmt)
+	Image raw_to_image(const uint8_t* data, unsigned w, unsigned h, cimbar_image_format_t fmt)
 	{
 		switch (fmt)
 		{
 		case CIMBAR_IMAGE_RGB:
-			return cv::Mat(h, w, CV_8UC3, const_cast<uint8_t*>(data)).clone();
+			return cv_bridge::from_cv_clone(data, w, h, 3);
 		case CIMBAR_IMAGE_RGBA:
 		{
-			cv::Mat rgba(h, w, CV_8UC4, const_cast<uint8_t*>(data));
-			cv::Mat rgb;
-			cv::cvtColor(rgba, rgb, cv::COLOR_RGBA2RGB);
-			return rgb;
+			Image rgba(const_cast<uint8_t*>(data), w, h, 4);
+			Image rgb;
+			cv_bridge::cvt_color(rgba, rgb, cv_bridge::COLOR_RGBA2RGB);
+			return rgb.clone();
 		}
 		case CIMBAR_IMAGE_BGR:
-			return cv::Mat(h, w, CV_8UC3, const_cast<uint8_t*>(data)).clone();
+		{
+			Image bgr(const_cast<uint8_t*>(data), w, h, 3);
+			Image rgb;
+			cv_bridge::cvt_color(bgr, rgb, cv_bridge::COLOR_BGR2RGB);
+			return rgb.clone();
+		}
 		case CIMBAR_IMAGE_BGRA:
 		{
-			cv::Mat bgra(h, w, CV_8UC4, const_cast<uint8_t*>(data));
-			cv::Mat rgb;
-			cv::cvtColor(bgra, rgb, cv::COLOR_BGRA2RGB);
-			return rgb;
+			Image bgra(const_cast<uint8_t*>(data), w, h, 4);
+			Image rgb;
+			cv_bridge::cvt_color(bgra, rgb, cv_bridge::COLOR_BGRA2RGB);
+			return rgb.clone();
 		}
 		case CIMBAR_IMAGE_GRAY:
 		{
-			cv::Mat gray(h, w, CV_8UC1, const_cast<uint8_t*>(data));
-			cv::Mat rgb;
-			cv::cvtColor(gray, rgb, cv::COLOR_GRAY2RGB);
-			return rgb;
+			Image gray(const_cast<uint8_t*>(data), w, h, 1);
+			Image rgb;
+			cv_bridge::cvt_color(gray, rgb, cv_bridge::COLOR_GRAY2RGB);
+			return rgb.clone();
 		}
 		default:
-			return cv::Mat();
+			return {};
 		}
 	}
 
-	int extract_cells_from_image(const cv::Mat& img_rgb, cimbar_cell_t* cells, size_t max_cells, unsigned* num_cells)
+	int extract_cells_from_image(const Image& img_rgb, cimbar_cell_t* cells, size_t max_cells, unsigned* num_cells)
 	{
 		CimbDecoder cd(cimbar::Config::symbol_bits(), cimbar::Config::color_bits(), cimbar::Config::dark(), 0xFF);
 		CimbReader reader(img_rgb, cd, cimbar::Config::color_mode(), false, 2);
@@ -198,7 +203,7 @@ namespace {
 		return (int)n;
 	}
 
-	int extract_and_deskew(const cv::Mat& img_rgb, cv::Mat& out)
+	int extract_and_deskew(const Image& img_rgb, Image& out)
 	{
 		Extractor ext;
 		return ext.extract(img_rgb, out);
@@ -425,7 +430,7 @@ int cimbar_encoder_encode_next(cimbar_encoder_t* enc, uint8_t* rgba, size_t buf_
 		if (frame)
 		{
 			++enc->frames_generated;
-			return mat_to_rgba(*frame, rgba, buf_size, out_w, out_h);
+			return image_to_rgba(*frame, rgba, buf_size, out_w, out_h);
 		}
 
 		// encode_next returned no frame — restart the fountain stream
@@ -562,7 +567,7 @@ struct cimbar_decoder {
 
 namespace {
 
-	int do_decode_image(cimbar_decoder* dec, const cv::Mat& img_rgb, uint8_t* output, size_t* out_len)
+	int do_decode_image(cimbar_decoder* dec, const Image& img_rgb, uint8_t* output, size_t* out_len)
 	{
 		if (!output || !out_len || *out_len == 0)
 			return CIMBAR_ERR_BAD_PARAM;
@@ -647,11 +652,11 @@ int cimbar_decoder_scan(cimbar_decoder_t* dec, const uint8_t* image_data, size_t
 		return CIMBAR_ERR_BAD_PARAM;
 	(void)data_len;
 
-	cv::Mat img_rgb = raw_to_mat(image_data, width, height, format);
+	Image img_rgb = raw_to_image(image_data, width, height, format);
 	if (img_rgb.empty())
 		return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat deskewed;
+	Image deskewed;
 	int ext_result = extract_and_deskew(img_rgb, deskewed);
 	if (ext_result == Extractor::FAILURE)
 		return CIMBAR_ERR_DECODE_FAIL;
@@ -665,15 +670,12 @@ int cimbar_decoder_scan_file(cimbar_decoder_t* dec, const char* path, uint8_t* o
 	if (!dec || !path || !output || !out_len)
 		return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat img = cv::imread(path, cv::IMREAD_COLOR);
+	Image img = cv_bridge::imread(path);
 	if (img.empty())
 		return CIMBAR_ERR_IO;
 
-	cv::Mat img_rgb;
-	cv::cvtColor(img, img_rgb, cv::COLOR_BGR2RGB);
-
-	cv::Mat deskewed;
-	int ext_result = extract_and_deskew(img_rgb, deskewed);
+	Image deskewed;
+	int ext_result = extract_and_deskew(img, deskewed);
 	if (ext_result == Extractor::FAILURE)
 		return CIMBAR_ERR_DECODE_FAIL;
 
@@ -703,9 +705,7 @@ int cimbar_decoder_decode_cells(cimbar_decoder_t* dec, const cimbar_cell_t* cell
 	}
 
 	// Now decode the rendered image
-	cv::Mat image = ce.load_tile(cimbar::Config::symbol_bits(), 0); // dummy
-	// Actually, create a proper image from the cell data
-	cv::Mat rendered = cw.image();
+	Image rendered = cw.image().clone();
 	if (rendered.empty())
 		return CIMBAR_ERR_DECODE_FAIL;
 
@@ -721,11 +721,11 @@ int cimbar_decoder_fountain_feed(cimbar_decoder_t* dec, const uint8_t* image_dat
 	if (!dec->reassembled.empty())
 		return CIMBAR_OK;
 
-	cv::Mat img_rgb = raw_to_mat(image_data, width, height, format);
+	Image img_rgb = raw_to_image(image_data, width, height, format);
 	if (img_rgb.empty())
 		return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat deskewed;
+	Image deskewed;
 	int ext_result = extract_and_deskew(img_rgb, deskewed);
 	if (ext_result == Extractor::FAILURE)
 		return CIMBAR_ERR_DECODE_FAIL;
@@ -805,15 +805,12 @@ int cimbar_decoder_fountain_feed_file(cimbar_decoder_t* dec, const char* path)
 {
 	if (!dec || !path) return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat img = cv::imread(path, cv::IMREAD_COLOR);
+	Image img = cv_bridge::imread(path);
 	if (img.empty())
 		return CIMBAR_ERR_IO;
 
-	cv::Mat img_rgb;
-	cv::cvtColor(img, img_rgb, cv::COLOR_BGR2RGB);
-
-	return cimbar_decoder_fountain_feed(dec, img_rgb.data, img_rgb.total() * img_rgb.elemSize(),
-	                                   img_rgb.cols, img_rgb.rows, CIMBAR_IMAGE_RGB);
+	return cimbar_decoder_fountain_feed(dec, img.data, img.total(),
+	                                   img.width, img.height, CIMBAR_IMAGE_RGB);
 }
 #endif
 
@@ -822,24 +819,20 @@ int cimbar_decoder_fountain_feed_cells(cimbar_decoder_t* dec, const cimbar_cell_
 	if (!dec || !cells) return CIMBAR_ERR_BAD_PARAM;
 	(void)num_cells;
 
-	// For v1: render cells to image, then feed via fountain_feed
 	CimbWriter cw(cimbar::Config::symbol_bits(), cimbar::Config::color_bits(), cimbar::Config::dark(), cimbar::Config::color_mode());
 	for (size_t i = 0; i < num_cells && !cw.done(); ++i)
 	{
-		// CimbEncoder expects (color << symbol_bits) | symbol as tile index
 		unsigned combined = ((unsigned)cells[i].color << cimbar::Config::symbol_bits()) | cells[i].symbol;
 		cw.write(combined);
 	}
 
-	cv::Mat rendered = cw.image();
+	Image rendered = cw.image().clone();
 	if (rendered.empty())
 		return CIMBAR_ERR_DECODE_FAIL;
 
-	// CimbWriter produces BGR images (OpenCV default), but feed expects RGB
-	cv::Mat rendered_rgb;
-	cv::cvtColor(rendered, rendered_rgb, cv::COLOR_BGR2RGB);
-	return cimbar_decoder_fountain_feed(dec, rendered_rgb.data, rendered_rgb.total() * rendered_rgb.elemSize(),
-	                                   rendered_rgb.cols, rendered_rgb.rows, CIMBAR_IMAGE_RGB);
+	// CimbWriter produces RGB images internally
+	return cimbar_decoder_fountain_feed(dec, rendered.data, rendered.total(),
+	                                   rendered.width, rendered.height, CIMBAR_IMAGE_RGB);
 }
 
 int cimbar_decoder_fountain_is_complete(const cimbar_decoder_t* dec)
@@ -956,14 +949,11 @@ int cimbar_image_load(const char* path, uint8_t* rgba, size_t buf_size, unsigned
 {
 	if (!path || !rgba) return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat img = cv::imread(path, cv::IMREAD_COLOR);
+	Image img = cv_bridge::imread(path);
 	if (img.empty())
 		return CIMBAR_ERR_IO;
 
-	cv::Mat img_rgb;
-	cv::cvtColor(img, img_rgb, cv::COLOR_BGR2RGB);
-
-	return mat_to_rgba(img_rgb, rgba, buf_size, out_w, out_h);
+	return image_to_rgba(img, rgba, buf_size, out_w, out_h);
 }
 #endif
 
@@ -975,11 +965,11 @@ int cimbar_extract_cells(const uint8_t* image_data, size_t data_len,
 		return CIMBAR_ERR_BAD_PARAM;
 	(void)data_len;
 
-	cv::Mat img_rgb = raw_to_mat(image_data, width, height, format);
+	Image img_rgb = raw_to_image(image_data, width, height, format);
 	if (img_rgb.empty())
 		return CIMBAR_ERR_BAD_PARAM;
 
-	cv::Mat deskewed;
+	Image deskewed;
 	int ext_result = extract_and_deskew(img_rgb, deskewed);
 	if (ext_result == Extractor::FAILURE)
 		return CIMBAR_ERR_DECODE_FAIL;
@@ -997,16 +987,15 @@ int cimbar_render(const cimbar_cell_t* cells, size_t num_cells,
 	CimbWriter cw(cimbar::Config::symbol_bits(), cimbar::Config::color_bits(), cimbar::Config::dark(), cimbar::Config::color_mode());
 	for (size_t i = 0; i < num_cells && !cw.done(); ++i)
 	{
-		// CimbEncoder expects (color << symbol_bits) | symbol as tile index
 		unsigned combined = ((unsigned)cells[i].color << cimbar::Config::symbol_bits()) | cells[i].symbol;
 		cw.write(combined);
 	}
 
-	cv::Mat rendered = cw.image();
+	Image rendered = cw.image().clone();
 	if (rendered.empty())
 		return CIMBAR_ERR_ENCODE_FAIL;
 
-	return mat_to_rgba(rendered, rgba, buf_size, out_w, out_h);
+	return image_to_rgba(rendered, rgba, buf_size, out_w, out_h);
 }
 
 #if defined(__GNUC__) && !defined(__clang__)

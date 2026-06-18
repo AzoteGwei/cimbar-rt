@@ -13,8 +13,8 @@
 #include "Point.h"
 #include "ScanState.h"
 #include "support/os/compiler_constants.h"
+#include "support/image/cv_bridge.h"
 
-#include <opencv2/opencv.hpp>
 #include <functional>
 #include <vector>
 
@@ -33,7 +33,7 @@ public: // public inline methods
 	static void threshold_adaptive(const MAT& img, MAT2& out);
 
 	template <typename MAT>
-	static cv::Mat preprocess_image(const MAT& img, bool fast);
+	static Image preprocess_image(const MAT& img, bool fast);
 
 	template <typename MAT, typename MAT2>
 	static void preprocess_image(const MAT& img, MAT2& out, bool fast);
@@ -89,7 +89,7 @@ protected: // internal member functions
 	point<int> find_edge(const point<int>& u, const point<int>& v, point<double> mid) const;
 
 protected:
-	cv::Mat _img;
+	Image _img;
 	bool _dark;
 	int _skip;
 	int _mergeCutoff;
@@ -133,7 +133,7 @@ inline bool Scanner::will_it_scan(const MAT& unpadded_img)
 template <typename MAT, typename MAT2>
 inline void Scanner::threshold_fast(const MAT& img, MAT2& out)
 {
-	cv::threshold(img, out, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+	cv_bridge::threshold_otsu(img, out);
 }
 
 template <typename MAT, typename MAT2>
@@ -141,13 +141,13 @@ inline void Scanner::threshold_adaptive(const MAT& img, MAT2& out)
 {
 	unsigned unit = std::min(img.cols, img.rows);
 	unit = nextPowerOfTwoPlusOne((unsigned)(unit * 0.05));
-	cv::adaptiveThreshold(img, out, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, unit, -10);
+	cv_bridge::adaptive_threshold(img, out, 255, unit, -10);
 }
 
 template <typename MAT>
-inline cv::Mat Scanner::preprocess_image(const MAT& img, bool fast)
+inline Image Scanner::preprocess_image(const MAT& img, bool fast)
 {
-	cv::Mat out;
+	Image out;
 	preprocess_image(img, out, fast);
 	return out;
 }
@@ -155,30 +155,36 @@ inline cv::Mat Scanner::preprocess_image(const MAT& img, bool fast)
 template <typename MAT, typename MAT2>
 inline void Scanner::preprocess_image(const MAT& img, MAT2& out, bool fast)
 {
-	MAT temp;
+	Image temp_img;
 	if (img.channels() >= 3)
-		cv::cvtColor(img, temp, cv::COLOR_RGB2GRAY);
+		cv_bridge::cvt_color(img, temp_img, cv_bridge::COLOR_RGB2GRAY);
 	else
-		temp = img.clone();
+	{
+		// ponytail: 通用单通道转换，对 cv::Mat 和 Image 都有效
+		Image gray_img(img.cols, img.rows, 1);
+		for (int r = 0; r < img.rows; ++r)
+			std::memcpy(gray_img.ptr(r), img.ptr(r), img.cols);
+		temp_img = std::move(gray_img);
+	}
 
-	unsigned unit = std::min(img.cols, img.rows);
+	unsigned unit = std::min((int)img.cols, (int)img.rows);
 	unit = std::max(nextPowerOfTwoPlusOne((unsigned)(unit * 0.002)), 3U);
-	cv::GaussianBlur(temp, temp, cv::Size(unit, unit), 0);
+	cv_bridge::gaussian_blur(temp_img, temp_img, unit);
 
 	if (fast)
-		threshold_fast(temp, out);
+		threshold_fast(temp_img, out);
 	else
-		threshold_adaptive(temp, out);
+		threshold_adaptive(temp_img, out);
 }
 
 template <typename MAT>
 inline Scanner::Scanner(const MAT& img, bool fast, bool dark, int skip)
 	: _dark(dark)
-	, _skip(skip? skip : std::min(img.rows, img.cols) / 60)
+	, _skip(skip? skip : std::min((int)img.rows, (int)img.cols) / 60)
 	, _mergeCutoff(img.cols / 30)
 	, _anchorSize(30)
 {
-	_img = preprocess_image(img, fast);
+	preprocess_image(img, _img, fast);
 }
 
 template <typename SCANTYPE>
@@ -244,8 +250,8 @@ inline bool Scanner::scan_vertical(std::vector<Anchor>& points, int x, int xmax,
 template <typename SCANTYPE>
 inline bool Scanner::scan_diagonal(std::vector<Anchor>& points, int xstart, int xend, int ystart, int yend) const
 {
-	xend = std::min(xend, _img.cols);
-	yend = std::min(yend, _img.rows);
+	xend = std::min(xend, (int)_img.cols);
+	yend = std::min(yend, (int)_img.rows);
 
 	// if we're up against the top/left bounds, roll the scan forward until we're inside the bounds
 	if (xstart < 0)

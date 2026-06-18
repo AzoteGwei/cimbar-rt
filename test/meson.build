@@ -6,12 +6,13 @@ test_support_src = files(
   'support/test.cpp',
   'support/bitbufferTest.cpp',
   'support/bitreaderTest.cpp',
+  'support/ImageTest.cpp',
 )
 
 test_support_exe = executable('test_support',
   test_support_src,
   include_directories: [test_inc, test_src_inc, src_inc, third_party_inc],
-  dependencies: [support_bit_dep, support_text_dep, support_os_dep, opencv_dep],
+  dependencies: [support_bit_dep, support_text_dep, support_os_dep, cv_bridge_dep, opencv_dep],
 )
 test('support', test_support_exe)
 

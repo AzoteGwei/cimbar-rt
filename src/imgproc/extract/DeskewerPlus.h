@@ -9,8 +9,7 @@
 #pragma once
 
 #include "Deskewer.h"
-
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 class DeskewerPlus : public Deskewer
 {
@@ -18,22 +17,19 @@ public:
 	using Deskewer::Deskewer;
 	using Deskewer::deskew;
 
-	cv::Mat deskew(std::string img, const Corners& corners);
-	bool save(const cv::Mat& img, std::string path);
+	Image deskew(std::string img, const Corners& corners);
+	bool save(const Image& img, std::string path);
 
 protected:
 };
 
-inline cv::Mat DeskewerPlus::deskew(std::string img, const Corners& corners)
+inline Image DeskewerPlus::deskew(std::string img, const Corners& corners)
 {
-	cv::Mat mat = cv::imread(img);
-	cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
+	Image mat = cv_bridge::imread(img);
 	return Deskewer::deskew(mat, corners);
 }
 
-inline bool DeskewerPlus::save(const cv::Mat& img, std::string path)
+inline bool DeskewerPlus::save(const Image& img, std::string path)
 {
-	cv::Mat bgr;
-	cv::cvtColor(img, bgr, cv::COLOR_RGB2BGR);
-	return cv::imwrite(path, img);
+	return cv_bridge::imwrite(path, img);
 }

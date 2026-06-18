@@ -8,15 +8,17 @@
 
 #pragma once
 
-#include <opencv2/opencv.hpp>
+#include "support/image/Image.h"
+#include <cstdint>
 #include <string>
+#include <tuple>
 
 namespace cimbar
 {
-	using RGB = std::tuple<uchar,uchar,uchar>;
+	using RGB = std::tuple<uint8_t,uint8_t,uint8_t>;
 
-	cv::Mat load_img(std::string path);
+	Image load_img(std::string path);
 
-	std::tuple<uchar,uchar,uchar> getColor(unsigned index, unsigned num_colors, unsigned color_mode);
-	cv::Mat getTile(unsigned symbol_bits, unsigned symbol, bool dark=true, unsigned num_colors=4, unsigned color=0, unsigned color_mode=1);
+	std::tuple<uint8_t,uint8_t,uint8_t> getColor(unsigned index, unsigned num_colors, unsigned color_mode);
+	Image getTile(unsigned symbol_bits, unsigned symbol, bool dark=true, unsigned num_colors=4, unsigned color=0, unsigned color_mode=1);
 }

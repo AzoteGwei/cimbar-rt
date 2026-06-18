@@ -16,7 +16,7 @@
 #include "core/compression/zstd_compressor.h"
 #include "core/fountain/fountain_encoder_stream.h"
 
-#include <opencv2/opencv.hpp>
+#include "support/image/Image.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -36,7 +36,7 @@ public:
 	void set_color_mode(unsigned color_mode);
 
 	template <typename STREAM>
-	std::optional<cv::Mat> encode_next(STREAM& stream, cimbar::vec_xy canvas_size={},
+	std::optional<Image> encode_next(STREAM& stream, cimbar::vec_xy canvas_size={},
 	                                  cimbar_cell* cells_out=nullptr, unsigned* num_cells=nullptr);
 
 	template <typename STREAM>
@@ -44,7 +44,7 @@ public:
 
 protected:
 	template <typename STREAM>
-	std::optional<cv::Mat> encode_next_coupled(STREAM& stream, cimbar::vec_xy canvas_size={});
+	std::optional<Image> encode_next_coupled(STREAM& stream, cimbar::vec_xy canvas_size={});
 
 protected:
 	unsigned _eccBytes;
@@ -82,7 +82,7 @@ inline void Encoder::set_color_mode(unsigned color_mode)
 }
 
 template <typename STREAM>
-inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_xy canvas_size,
+inline std::optional<Image> Encoder::encode_next(STREAM& stream, cimbar::vec_xy canvas_size,
                                                    cimbar_cell* cells_out, unsigned* num_cells)
 {
 	if (_coupled)
@@ -156,11 +156,11 @@ inline std::optional<cv::Mat> Encoder::encode_next(STREAM& stream, cimbar::vec_x
 	}
 
 	// return what we've got
-	return writer.image();
+	return writer.image().clone();
 }
 
 template <typename STREAM>
-inline std::optional<cv::Mat> Encoder::encode_next_coupled(STREAM& stream, cimbar::vec_xy canvas_size)
+inline std::optional<Image> Encoder::encode_next_coupled(STREAM& stream, cimbar::vec_xy canvas_size)
 {
 	// the old way. Symbol and color bits are mixed together, limiting the color correction possibilities
 	// but potentially allowing a lack of errors in one channel to correct errors in the other.
@@ -188,10 +188,10 @@ inline std::optional<cv::Mat> Encoder::encode_next_coupled(STREAM& stream, cimba
 				writer.write(bits);
 		}
 		if (writer.done())
-			return writer.image();
+			return writer.image().clone();
 	}
 	// we don't have a full frame, but return what we've got
-	return writer.image();
+	return writer.image().clone();
 }
 
 template <typename STREAM>

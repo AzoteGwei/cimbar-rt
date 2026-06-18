@@ -12,6 +12,7 @@
 #include "SimpleCameraCalibration.h"
 
 #include "DistortionParameters.h"
+#include "support/image/cv_bridge.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <sstream>
@@ -20,7 +21,7 @@
 
 TEST_CASE( "SimpleCameraCalibrationTest/testGetParams", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 
 	SimpleCameraCalibration scc;
 	DistortionParameters dp = scc.scan(img);

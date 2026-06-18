@@ -15,6 +15,8 @@
 #include "support/bit/bitmatrix.h"
 #include "core/codec/Common.h"
 #include "support/text/format.h"
+#include "support/image/Image.h"
+#include "support/image/cv_bridge.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
@@ -24,17 +26,16 @@ using std::string;
 
 namespace {
 	// for performance reasons, the high level Decoder/CimbReader does the decode in 2 parts. This is the one-shot version.
-	unsigned decode(CimbDecoder& cd, const cv::Mat& tile10)
+	unsigned decode(CimbDecoder& cd, const Image& tile10)
 	{
 		unsigned drift_offset;
 		unsigned distance;
 		unsigned bits = cd.decode_symbol(tile10, drift_offset, distance);
 
 		auto [x,y] = CellDrift::driftPairs[drift_offset];
-		cv::Rect crop(1+x, 1+y, tile10.cols-2, tile10.rows-2);
-		cv::Mat tile8 = tile10(crop);
+		Image tile8 = tile10.roi(1+x, 1+y, tile10.cols-2, tile10.rows-2);
 
-		bits |= cd.decode_color(tile8, 1) << cd.symbol_bits();
+		bits |= cd.decode_color(Cell(tile8), 1) << cd.symbol_bits();
 		return bits;
 	}
 }
@@ -45,9 +46,9 @@ TEST_CASE( "CimbDecoderTest/testSimpleDecode", "[unit]" )
 
 	for (unsigned i = 0; i < 16; ++i)
 	{
-		cv::Mat tile = cimbar::getTile(4, i, true);
-		cv::Mat tenxten(10, 10, tile.type());
-		tile.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tile.size())));
+		Image tile = cimbar::getTile(4, i, true);
+		Image tenxten = cv_bridge::create(10, 10, tile.channels());
+		cv_bridge::copy_to(tile, tenxten, 1, 1);
 		unsigned res = decode(cd, tenxten);
 		assertEquals(i, res);
 	}
@@ -60,9 +61,10 @@ TEST_CASE( "CimbDecoderTest/testPrethresholdDecode", "[unit]" )
 
 	for (unsigned i = 0; i < 16; ++i)
 	{
-		cv::Mat tile = cimbar::getTile(4, i, true);
-		cv::Mat tenxten(10, 10, tile.type(), cv::Scalar(0, 0, 0));
-		tile.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tile.size())));
+		Image tile = cimbar::getTile(4, i, true);
+		cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
+		cv::Mat tenxten(10, 10, tileMat.type(), cv::Scalar(0, 0, 0));
+		tileMat.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tileMat.size())));
 
 		// grayscale and threshold, since that's what average_hash needs
 		cv::cvtColor(tenxten, tenxten, cv::COLOR_RGB2GRAY);
@@ -141,12 +143,13 @@ TEST_CASE( "CimbDecoderTest/testColorDecode", "[unit]" )
 {
 	CimbDecoder cd(4, 2);
 
-	cv::Mat tile = cimbar::getTile(4, 2, true, 4, 2);
-	cv::resize(tile, tile, cv::Size(10, 10));
+	Image tile = cimbar::getTile(4, 2, true, 4, 2);
+	Image resized;
+	cv_bridge::resize(tile, resized, 10, 10);
 
-	unsigned color = cd.decode_color(Cell(tile), 1);
+	unsigned color = cd.decode_color(Cell(resized), 1);
 	assertEquals(2, color);
-	unsigned res = decode(cd, tile);
+	unsigned res = decode(cd, resized);
 	assertEquals(34, res);
 }
 
@@ -159,9 +162,9 @@ TEST_CASE( "CimbDecoderTest/testAllColorDecodes", "[unit]" )
 		{
 			DYNAMIC_SECTION( "testColor " << c << ":" << i )
 			{
-				cv::Mat tile = cimbar::getTile(4, i, true, 4, c);
-				cv::Mat tenxten(10, 10, tile.type(), {0,0,0});
-				tile.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tile.size())));
+				Image tile = cimbar::getTile(4, i, true, 4, c);
+				Image tenxten = cv_bridge::create(10, 10, tile.channels());
+				cv_bridge::copy_to(tile, tenxten, 1, 1);
 
 				unsigned color = cd.decode_color(Cell(tenxten), 1);
 				assertEquals(c, color);
@@ -175,7 +178,7 @@ TEST_CASE( "CimbDecoderTest/test_decode_symbol_sloppy", "[unit]" )
 {
 	CimbDecoder cd(4, 2);
 
-	cv::Mat cell = TestCimbar::loadSample("mycell.png");
+	Image cell = TestCimbar::loadSample("mycell.png");
 
 	unsigned drift_offset;
 	unsigned best_distance;

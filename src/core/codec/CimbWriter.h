@@ -10,6 +10,7 @@
 
 #include "CellPositions.h"
 #include "CimbEncoder.h"
+#include "support/image/Image.h"
 #include "support/os/vec_xy.h"
 
 class CimbWriter
@@ -20,15 +21,15 @@ public:
 	bool write(unsigned bits);
 	bool done() const;
 
-	cv::Mat image() const;
+	const Image& image() const;
 
 	unsigned num_cells() const;
 
 protected:
-	void paste(const cv::Mat& img, int x, int y);
+	void paste(const Image& img, int x, int y);
 
 protected:
-	cv::Mat _image;
+	Image _image;
 	CellPositions _positions;
 	CimbEncoder _encoder;
 	unsigned _offsetX = 0;

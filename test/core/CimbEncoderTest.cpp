@@ -11,6 +11,7 @@
 #include "CimbEncoder.h"
 
 #include "core/codec/Common.h"
+#include "support/image/Image.h"
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
@@ -21,18 +22,22 @@ using std::string;
 TEST_CASE( "CimbEncoderTest/testSimple", "[unit]" )
 {
 	CimbEncoder cw(4, 0);
-	cv::Mat res = cw.encode(14);
+	const Image& res = cw.encode(14);
 
-	cv::Mat expected = cimbar::getTile(4, 14, true);
-	REQUIRE(cv::sum(expected != res) == cv::Scalar(0,0,0,0));
+	Image expected = cimbar::getTile(4, 14, true);
+	cv::Mat resMat(res.rows, res.cols, CV_8UC(res.channels()), res.data, res.stride);
+	cv::Mat expMat(expected.rows, expected.cols, CV_8UC(expected.channels()), expected.data, expected.stride);
+	REQUIRE(cv::sum(expMat != resMat) == cv::Scalar(0,0,0,0));
 }
 
 TEST_CASE( "CimbEncoderTest/testColor", "[unit]" )
 {
 	CimbEncoder cw(4, 3);
-	cv::Mat res = cw.encode(55);
+	const Image& res = cw.encode(55);
 
-	cv::Mat expected = cimbar::getTile(4, 7, true, 8, 3); // 3*16 + 7 == 55
-	REQUIRE(cv::sum(expected != res) == cv::Scalar(0,0,0,0));
+	Image expected = cimbar::getTile(4, 7, true, 8, 3); // 3*16 + 7 == 55
+	cv::Mat resMat(res.rows, res.cols, CV_8UC(res.channels()), res.data, res.stride);
+	cv::Mat expMat(expected.rows, expected.cols, CV_8UC(expected.channels()), expected.data, expected.stride);
+	REQUIRE(cv::sum(expMat != resMat) == cv::Scalar(0,0,0,0));
 }
 

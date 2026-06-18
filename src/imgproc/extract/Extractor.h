@@ -10,9 +10,9 @@
 
 #include "Deskewer.h"
 #include "Scanner.h"
+#include "support/image/Image.h"
 #include "support/os/vec_xy.h"
 
-#include <opencv2/opencv.hpp>
 #include <vector>
 
 class Extractor
@@ -25,8 +25,7 @@ public:
 public:
 	Extractor(unsigned padding=0, cimbar::vec_xy image_size={}, unsigned anchor_size=0);
 
-	template <typename MAT>
-	int extract(const MAT& img, MAT& out);
+	int extract(const Image& img, Image& out);
 
 protected:
 	cimbar::vec_xy _imageSize;
@@ -34,8 +33,7 @@ protected:
 	unsigned _padding;
 };
 
-template <typename MAT>
-inline int Extractor::extract(const MAT& img, MAT& out)
+inline int Extractor::extract(const Image& img, Image& out)
 {
 	Scanner scanner(img);
 	std::vector<Anchor> points = scanner.scan();

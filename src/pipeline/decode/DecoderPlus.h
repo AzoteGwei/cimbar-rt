@@ -10,8 +10,8 @@
 
 #include "Decoder.h"
 #include "support/os/File.h"
+#include "support/image/cv_bridge.h"
 
-#include <opencv2/opencv.hpp>
 #include <string>
 
 class DecoderPlus : public Decoder
@@ -31,8 +31,7 @@ public:
 #ifndef __EMSCRIPTEN__
 inline unsigned DecoderPlus::decode(std::string filename, std::string output)
 {
-	cv::Mat img = cv::imread(filename);
-	cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+	Image img = cv_bridge::imread(filename);
 
 	std::ofstream f(output);
 	return Decoder::decode(img, f, false);
@@ -46,8 +45,8 @@ inline bool DecoderPlus::load_ccm(std::string filename)
 	if (data.size() < 3*3*4)
 		return false;
 
+	// ponytail: color_correction 还接受 cv::Matx，等 Phase 2.6
 	cv::Mat temp(3, 3, CV_32F, data.data());
-
 	_decoder.update_color_correction(temp);
 	return true;
 }
@@ -57,11 +56,11 @@ inline bool DecoderPlus::save_ccm(std::string filename)
 	if (not _decoder.get_ccm().active())
 		return false;
 
+	// ponytail: color_correction 还返回 cv::Matx，等 Phase 2.6
 	cv::Mat temp(_decoder.get_ccm().mat());
 
 	File f(filename, true);
-	if (f.write(reinterpret_cast<const char*>(temp.data), temp.rows * temp.cols * temp.elemSize()) == 0)  // len will be 9*elemsize, but...
+	if (f.write(reinterpret_cast<const char*>(temp.data), temp.rows * temp.cols * temp.elemSize()) == 0)
 		return false;
 	return true;
 }
-

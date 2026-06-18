@@ -14,4 +14,12 @@ support_os_dep = declare_dependency(
   include_directories: include_directories('os'),
 )
 
+# ==================== support/image - Image type + cv_bridge ====================
+subdir('image')
+
+support_image_dep = declare_dependency(
+  include_directories: include_directories('image'),
+  dependencies: [cv_bridge_dep],
+)
+
 

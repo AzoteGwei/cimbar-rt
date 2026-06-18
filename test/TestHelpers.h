@@ -7,7 +7,8 @@
  */
 
 
-#include <opencv2/opencv.hpp>
+#include "support/image/Image.h"
+#include "support/image/cv_bridge.h"
 #include "support/text/format.h"
 #include <string>
 
@@ -18,11 +19,9 @@ namespace TestCimbar
 		return std::string(LIBCIMBAR_PROJECT_ROOT) + "/samples/" + filename;
 	}
 
-	inline cv::Mat loadSample(std::string filename)
+	inline Image loadSample(std::string filename)
 	{
-		cv::Mat mat = cv::imread(getSample(filename));
-		cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
-		return mat;
+		return cv_bridge::imread(getSample(filename));
 	}
 
 	inline std::string getProjectDir()

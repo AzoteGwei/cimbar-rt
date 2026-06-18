@@ -10,8 +10,8 @@
 
 #include "Corners.h"
 
+#include "support/image/cv_bridge.h"
 #include "support/os/vec_xy.h"
-#include <opencv2/opencv.hpp>
 
 #include <vector>
 
@@ -32,16 +32,17 @@ protected:
 template <typename MAT>
 inline MAT Deskewer::deskew(const MAT& img, const Corners& corners)
 {
-	std::vector<cv::Point2f> outputPoints;
-	outputPoints.push_back(cv::Point2f(_anchorSize+_padding, _anchorSize+_padding));
-	outputPoints.push_back(cv::Point2f(_imageSize.width() - _anchorSize+_padding, _anchorSize+_padding));
-	outputPoints.push_back(cv::Point2f(_anchorSize+_padding, _imageSize.height() - _anchorSize+_padding));
-	outputPoints.push_back(cv::Point2f(_imageSize.width() - _anchorSize+_padding, _imageSize.height() - _anchorSize+_padding));
+	std::vector<cv_bridge::Point2f> outputPoints;
+	outputPoints.push_back(cv_bridge::Point2f(_anchorSize+_padding, _anchorSize+_padding));
+	outputPoints.push_back(cv_bridge::Point2f(_imageSize.width() - _anchorSize+_padding, _anchorSize+_padding));
+	outputPoints.push_back(cv_bridge::Point2f(_anchorSize+_padding, _imageSize.height() - _anchorSize+_padding));
+	outputPoints.push_back(cv_bridge::Point2f(_imageSize.width() - _anchorSize+_padding, _imageSize.height() - _anchorSize+_padding));
 
-	// + 2*padding ?
-	MAT output(_imageSize.height() + (_padding*2), _imageSize.width() + (_padding*2), img.type());
-	cv::Mat transform = cv::getPerspectiveTransform(corners.all(), outputPoints);
+	unsigned out_w = _imageSize.width() + (_padding*2);
+	unsigned out_h = _imageSize.height() + (_padding*2);
+	MAT output = cv_bridge::create(out_w, out_h, img.channels());
 
-	cv::warpPerspective(img, output, transform, output.size(), cv::INTER_LINEAR);
+	std::vector<cv_bridge::Point2f> src_pts = corners.all();
+	cv_bridge::warp_perspective(img, output, src_pts.data(), outputPoints.data(), out_w, out_h);
 	return output;
 }

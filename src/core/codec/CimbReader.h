@@ -15,13 +15,12 @@
 #include "support/bit/bitbuffer.h"
 #include "core/fountain/FountainMetadata.h"
 #include "support/os/compiler_constants.h"
-#include <opencv2/opencv.hpp>
+#include "support/image/Image.h"
 
 class CimbReader
 {
 public:
-	CimbReader(const cv::Mat& img, CimbDecoder& decoder, unsigned color_mode, bool needs_sharpen=false, int color_correction=2);
-	CimbReader(const cv::UMat& img, CimbDecoder& decoder, unsigned color_mode, bool needs_sharpen=false, int color_correction=2);
+	CimbReader(const Image& img, CimbDecoder& decoder, unsigned color_mode, bool needs_sharpen=false, int color_correction=2);
 
 	CIMBAR_ALWAYS_INLINE unsigned read(PositionData& pos);
 	CIMBAR_ALWAYS_INLINE unsigned read_color(const PositionData& pos) const;
@@ -33,7 +32,7 @@ public:
 	unsigned num_reads() const;
 
 protected:
-	cv::Mat _image;
+	Image _image;
 	bitbuffer _grayscale;
 	FountainMetadata _fountainColorHeader;
 	unsigned _radioactiveBlockId;

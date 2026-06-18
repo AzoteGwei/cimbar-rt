@@ -10,6 +10,7 @@
 #include "TestHelpers.h"
 
 #include "Scanner.h"
+#include "support/image/cv_bridge.h"
 
 #include "Corners.h"
 #include "Midpoints.h"
@@ -21,7 +22,7 @@
 
 TEST_CASE( "ScannerTest/testPiecemealScan", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates;
@@ -61,7 +62,7 @@ TEST_CASE( "ScannerTest/testPiecemealScan", "[unit]" )
 
 TEST_CASE( "ScannerTest/testBottomRightCorner", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates;
@@ -81,7 +82,7 @@ TEST_CASE( "ScannerTest/testBottomRightCorner", "[unit]" )
 
 TEST_CASE( "ScannerTest/testBottomRightCorner.2", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates;
@@ -101,7 +102,7 @@ TEST_CASE( "ScannerTest/testBottomRightCorner.2", "[unit]" )
 
 TEST_CASE( "ScannerTest/testBottomRightCorner.3", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f2_734.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f2_734.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates;
@@ -121,7 +122,7 @@ TEST_CASE( "ScannerTest/testBottomRightCorner.3", "[unit]" )
 
 TEST_CASE( "ScannerTest/testBottomRightCorner.4", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f2_246.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f2_246.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates;
@@ -142,7 +143,7 @@ TEST_CASE( "ScannerTest/testBottomRightCorner.4", "[unit]" )
 
 TEST_CASE( "ScannerTest/testExampleScan", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates = sc.scan();
@@ -155,7 +156,7 @@ TEST_CASE( "ScannerTest/testExampleScan", "[unit]" )
 
 TEST_CASE( "ScannerTest/testExampleScan.2", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f1_360.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f1_360.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates = sc.scan();
@@ -169,7 +170,7 @@ TEST_CASE( "ScannerTest/testExampleScan.2", "[unit]" )
 
 TEST_CASE( "ScannerTest/testExampleScan.3", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates = sc.scan();
@@ -183,7 +184,7 @@ TEST_CASE( "ScannerTest/testExampleScan.3", "[unit]" )
 
 TEST_CASE( "ScannerTest/testExampleScan.Adaptive", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 	Scanner sc(img, false);
 
 	std::vector<Anchor> candidates = sc.scan();
@@ -196,7 +197,7 @@ TEST_CASE( "ScannerTest/testExampleScan.Adaptive", "[unit]" )
 
 TEST_CASE( "ScannerTest/testScanEdges", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
 	Scanner sc(img);
 
 	std::vector<Anchor> candidates = sc.scan();

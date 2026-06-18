@@ -14,25 +14,28 @@
 #include "Extractor.h"
 #include "SimpleCameraCalibration.h"
 #include "imgproc/hash/average_hash.h"
+#include "support/image/cv_bridge.h"
 #include <iostream>
 #include <string>
 #include <vector>
 
 TEST_CASE( "UndistortTest/testUndistort", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
-	cv::Mat out;
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image out;
 
 	Undistort<SimpleCameraCalibration> und;
 	assertTrue( und.undistort(img, out) );
 
-	assertEquals( 0x662450383e3c4c72, image_hash::average_hash(out) );
+	cv::Mat out_mat;
+	cv_bridge::image_to_mat(out, &out_mat);
+	assertEquals( 0x662450383e3c4c72, image_hash::average_hash(out_mat) );
 }
 
 TEST_CASE( "UndistortTest/testUndistortAndExtract", "[unit]" )
 {
-	cv::Mat img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
-	cv::Mat out;
+	Image img = TestCimbar::loadSample("6bit/4_30_f0_627.jpg");
+	Image out;
 
 	Undistort<SimpleCameraCalibration> und;
 	assertTrue( und.undistort(img, out) );
@@ -40,5 +43,7 @@ TEST_CASE( "UndistortTest/testUndistortAndExtract", "[unit]" )
 	Extractor ex(0, {1024, 1024}, 30);
 	assertTrue( ex.extract(out, out) );
 
-	assertEquals( 0x18f26faca7766794, image_hash::average_hash(out) );
+	cv::Mat out_mat;
+	cv_bridge::image_to_mat(out, &out_mat);
+	assertEquals( 0x18f26faca7766794, image_hash::average_hash(out_mat) );
 }

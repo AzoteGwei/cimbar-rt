@@ -16,6 +16,7 @@
 #include "core/fountain/FountainInit.h"
 #include "core/fountain/fountain_decoder_sink.h"
 #include "support/text/str.h"
+#include "support/image/cv_bridge.h"
 
 #include "cxxopts/cxxopts.hpp"
 
@@ -128,7 +129,7 @@ int encode(const FilenameIterable& infiles, const std::string& outpath, int comp
 }
 
 template <typename FilenameIterable>
-int decode(const FilenameIterable& infiles, const std::function<int(cv::UMat, bool, int)>& decodefun, bool no_deskew, bool undistort, int preprocess, int color_correct)
+int decode(const FilenameIterable& infiles, const std::function<int(const Image&, bool, int)>& decodefun, bool no_deskew, bool undistort, int preprocess, int color_correct)
 {
 	int err = 0;
 	for (const string& inf : infiles)
@@ -136,8 +137,7 @@ int decode(const FilenameIterable& infiles, const std::function<int(cv::UMat, bo
 		if (inf.empty())
 			continue;
 		bool shouldPreprocess = (preprocess == 1);
-		cv::UMat img = cv::imread(inf).getUMat(cv::ACCESS_RW);
-		cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+		Image img = cv_bridge::imread(inf);
 
 		if (!no_deskew)
 		{
@@ -171,9 +171,9 @@ int decode(const FilenameIterable& infiles, const std::function<int(cv::UMat, bo
 // see also "decodefun" for non-fountain decodes, defined as a lambda inline below.
 // this one needs its own function since it's a template (:
 template <typename SINK>
-std::function<int(cv::UMat,bool,int)> fountain_decode_fun(SINK& sink, Decoder& d)
+std::function<int(const Image&,bool,int)> fountain_decode_fun(SINK& sink, Decoder& d)
 {
-	return [&sink, &d] (cv::UMat m, bool pre, int cc) {
+	return [&sink, &d] (const Image& m, bool pre, int cc) {
 		return d.decode_fountain(m, sink, pre, cc);
 	};
 }
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 
 		// simpler encoding, just the basics + ECC. No compression, fountain codes, etc.
 		std::ofstream f(outpath);
-		std::function<int(cv::UMat,bool,int)> decodefun = [&f, &d] (cv::UMat m, bool pre, int cc) {
+		std::function<int(const Image&,bool,int)> decodefun = [&f, &d] (const Image& m, bool pre, int cc) {
 			return d.decode(m, f, pre, cc);
 		};
 		if (useStdin)

@@ -11,7 +11,7 @@
 #include "Anchor.h"
 #include "Point.h"
 #include "support/os/vec_xy.h"
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 class Corners
 {
@@ -49,13 +49,13 @@ public:
 		return _bottom_left;
 	}
 
-	std::vector<cv::Point2f> all() const
+	std::vector<cv_bridge::Point2f> all() const
 	{
-		std::vector<cv::Point2f> points;
-		points.push_back(cv::Point2f(_top_left.x(), _top_left.y()));
-		points.push_back(cv::Point2f(_top_right.x(), _top_right.y()));
-		points.push_back(cv::Point2f(_bottom_left.x(), _bottom_left.y()));
-		points.push_back(cv::Point2f(_bottom_right.x(), _bottom_right.y()));
+		std::vector<cv_bridge::Point2f> points;
+		points.push_back(cv_bridge::Point2f(_top_left.x(), _top_left.y()));
+		points.push_back(cv_bridge::Point2f(_top_right.x(), _top_right.y()));
+		points.push_back(cv_bridge::Point2f(_bottom_left.x(), _bottom_left.y()));
+		points.push_back(cv_bridge::Point2f(_bottom_right.x(), _bottom_right.y()));
 		return points;
 	}
 
