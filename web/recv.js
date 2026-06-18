@@ -341,7 +341,7 @@ var Recv = function () {
         }
       }
 
-      const bar = document.querySelector(query);
+      bar = document.querySelector(query);
       if (bar) {
         bar.style.width = progress + "%";
       }
