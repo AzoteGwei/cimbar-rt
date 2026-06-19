@@ -15,7 +15,7 @@
 #include "core/codec/CellDrift.h"
 #include "core/codec/Common.h"
 #include "support/image/Image.h"
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 #include <iostream>
 #include <string>
@@ -24,28 +24,32 @@
 using std::string;
 
 namespace {
-	cv::Mat embedTile5x5(const cv::Mat& tile, bool binaryThresh=false)
+	Image embedTile5x5(const Image& tile, bool binaryThresh=false)
 	{
-		cv::Mat sevens(7, 7, tile.type(), cv::Scalar(0, 0, 0));
-		tile.copyTo(sevens(cv::Rect(cv::Point(1, 1), tile.size())));
+		Image sevens = cv_bridge::create(7, 7, tile.channels());
+		cv_bridge::copy_to(tile, sevens, 1, 1);
 
 		if (binaryThresh)
 		{
-			cv::cvtColor(sevens, sevens, cv::COLOR_RGB2GRAY);
-			cv::adaptiveThreshold(sevens, sevens, 0xFF, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 3, 0);
+			Image gray;
+			cv_bridge::cvt_color(sevens, gray, cv_bridge::COLOR_RGB2GRAY);
+			cv_bridge::adaptive_threshold(gray, gray, 0xFF, 3, 0);
+			return gray;
 		}
 		return sevens;
 	}
 
-	cv::Mat embedTile8x8(const cv::Mat& tile, bool binaryThresh=false)
+	Image embedTile8x8(const Image& tile, bool binaryThresh=false)
 	{
-		cv::Mat tenxten(10, 10, tile.type(), cv::Scalar(0, 0, 0));
-		tile.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tile.size())));
+		Image tenxten = cv_bridge::create(10, 10, tile.channels());
+		cv_bridge::copy_to(tile, tenxten, 1, 1);
 
 		if (binaryThresh)
 		{
-			cv::cvtColor(tenxten, tenxten, cv::COLOR_RGB2GRAY);
-			cv::adaptiveThreshold(tenxten, tenxten, 0xFF, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 3, 0);
+			Image gray;
+			cv_bridge::cvt_color(tenxten, gray, cv_bridge::COLOR_RGB2GRAY);
+			cv_bridge::adaptive_threshold(gray, gray, 0xFF, 3, 0);
+			return gray;
 		}
 		return tenxten;
 	}
@@ -54,15 +58,13 @@ namespace {
 TEST_CASE( "fuzzyAhashTest/testCorrectness5", "[unit]" )
 {
 	Image tile = cimbar::getTile(2, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile5x5(tileMat);
+	Image tenxten = embedTile5x5(tile);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 5, 5);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 5, 5);
 		expected.push_back(image_hash::average_hash(img, 64)); // we pass in a threshold value to match what fuzzy_ahash will compute
 	}
 
@@ -79,15 +81,13 @@ TEST_CASE( "fuzzyAhashTest/testCorrectness5", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testCorrectness8", "[unit]" )
 {
 	Image tile = cimbar::getTile(4, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile8x8(tileMat);
+	Image tenxten = embedTile8x8(tile);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 8, 8);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 8, 8);
 		expected.push_back(image_hash::average_hash(img, 64)); // we pass in a threshold value to match what fuzzy_ahash will compute
 	}
 
@@ -104,15 +104,13 @@ TEST_CASE( "fuzzyAhashTest/testCorrectness8", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testIterator", "[unit]" )
 {
 	Image tile = cimbar::getTile(4, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile8x8(tileMat);
+	Image tenxten = embedTile8x8(tile);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 8, 8);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 8, 8);
 		expected.push_back(image_hash::average_hash(img, 64)); // we pass in a threshold value to match what fuzzy_ahash will compute
 	}
 
@@ -145,15 +143,13 @@ TEST_CASE( "fuzzyAhashTest/testIterator", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testPreThreshold", "[unit]" )
 {
 	Image tile = cimbar::getTile(4, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile8x8(tileMat, true);
+	Image tenxten = embedTile8x8(tile, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 8, 8);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 8, 8);
 		expected.push_back(image_hash::average_hash(img, 64));
 	}
 
@@ -170,15 +166,13 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix", "[unit]" )
 {
 	Image tile = cimbar::getTile(4, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile8x8(tileMat, true);
+	Image tenxten = embedTile8x8(tile, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 8, 8);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 8, 8);
 		expected.push_back(image_hash::average_hash(img, 64));
 	}
 
@@ -200,15 +194,13 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix8.Fast", "[unit]" )
 {
 	Image tile = cimbar::getTile(4, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile8x8(tileMat, true);
+	Image tenxten = embedTile8x8(tile, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 8, 8);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 8, 8);
 		expected.push_back(image_hash::average_hash(img, 64));
 	}
 
@@ -236,15 +228,13 @@ TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix8.Fast", "[unit]" )
 TEST_CASE( "fuzzyAhashTest/testPreThreshold.BitMatrix5.Fast", "[unit]" )
 {
 	Image tile = cimbar::getTile(2, 0, true);
-	cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-	cv::Mat tenxten = embedTile5x5(tileMat, true);
+	Image tenxten = embedTile5x5(tile, true);
 
 	// compute the hashes we expect
 	std::vector<uint64_t> expected;
 	for (const std::pair<int, int>& drift : CellDrift::driftPairs)
 	{
-		cv::Rect crop(drift.first + 1, drift.second + 1, 5, 5);
-		cv::Mat img = tenxten(crop);
+		Image img = tenxten.roi(drift.first + 1, drift.second + 1, 5, 5);
 		expected.push_back(image_hash::average_hash(img, 64));
 	}
 

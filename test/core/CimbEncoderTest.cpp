@@ -9,15 +9,26 @@
 #include "unittest.h"
 
 #include "CimbEncoder.h"
-
-#include "core/codec/Common.h"
-#include "support/image/Image.h"
-#include <opencv2/opencv.hpp>
-
-#include <iostream>
+#include "Common.h"
 #include <string>
-#include <vector>
 using std::string;
+
+namespace {
+	bool images_equal(const Image& a, const Image& b)
+	{
+		if (a.width != b.width || a.height != b.height || a.channels() != b.channels())
+			return false;
+		for (unsigned y = 0; y < a.height; ++y)
+		{
+			const uint8_t* pa = a.ptr(y);
+			const uint8_t* pb = b.ptr(y);
+			for (unsigned x = 0; x < a.width * a.channels(); ++x)
+				if (pa[x] != pb[x])
+					return false;
+		}
+		return true;
+	}
+}
 
 TEST_CASE( "CimbEncoderTest/testSimple", "[unit]" )
 {
@@ -25,9 +36,7 @@ TEST_CASE( "CimbEncoderTest/testSimple", "[unit]" )
 	const Image& res = cw.encode(14);
 
 	Image expected = cimbar::getTile(4, 14, true);
-	cv::Mat resMat(res.rows, res.cols, CV_8UC(res.channels()), res.data, res.stride);
-	cv::Mat expMat(expected.rows, expected.cols, CV_8UC(expected.channels()), expected.data, expected.stride);
-	REQUIRE(cv::sum(expMat != resMat) == cv::Scalar(0,0,0,0));
+	REQUIRE( images_equal(res, expected) );
 }
 
 TEST_CASE( "CimbEncoderTest/testColor", "[unit]" )
@@ -36,8 +45,5 @@ TEST_CASE( "CimbEncoderTest/testColor", "[unit]" )
 	const Image& res = cw.encode(55);
 
 	Image expected = cimbar::getTile(4, 7, true, 8, 3); // 3*16 + 7 == 55
-	cv::Mat resMat(res.rows, res.cols, CV_8UC(res.channels()), res.data, res.stride);
-	cv::Mat expMat(expected.rows, expected.cols, CV_8UC(expected.channels()), expected.data, expected.stride);
-	REQUIRE(cv::sum(expMat != resMat) == cv::Scalar(0,0,0,0));
+	REQUIRE( images_equal(res, expected) );
 }
-

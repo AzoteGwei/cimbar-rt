@@ -15,7 +15,6 @@
 #include "SimpleCameraCalibration.h"
 #include "imgproc/hash/average_hash.h"
 #include "support/image/cv_bridge.h"
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -27,9 +26,7 @@ TEST_CASE( "UndistortTest/testUndistort", "[unit]" )
 	Undistort<SimpleCameraCalibration> und;
 	assertTrue( und.undistort(img, out) );
 
-	cv::Mat out_mat;
-	cv_bridge::image_to_mat(out, &out_mat);
-	assertEquals( 0x662450383e3c4c72, image_hash::average_hash(out_mat) );
+	assertEquals( 0x662450383e3c4c72, image_hash::average_hash(out) );
 }
 
 TEST_CASE( "UndistortTest/testUndistortAndExtract", "[unit]" )
@@ -43,7 +40,5 @@ TEST_CASE( "UndistortTest/testUndistortAndExtract", "[unit]" )
 	Extractor ex(0, {1024, 1024}, 30);
 	assertTrue( ex.extract(out, out) );
 
-	cv::Mat out_mat;
-	cv_bridge::image_to_mat(out, &out_mat);
-	assertEquals( 0x18f26faca7766794, image_hash::average_hash(out_mat) );
+	assertEquals( 0x18f26faca7766794, image_hash::average_hash(out) );
 }

@@ -13,21 +13,18 @@
 #include "Common.h"
 #include "support/image/cv_bridge.h"
 
-#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
 using std::string;
 
 
-TEST_CASE( "CellTest/testRgbMatchesOpenCV", "[unit]" )
+TEST_CASE( "CellTest/testRgbMatchesMean", "[unit]" )
 {
-	Image sample = TestCimbar::loadSample("mycell.png");
-	cv::Mat cell;
-	cv_bridge::image_to_mat(sample, &cell);
-	cv::Scalar expectedColor = cv::mean(cell);
+	Image img = TestCimbar::loadSample("mycell.png");
+	auto expectedColor = cv_bridge::mean(img);
 
-	auto [r, g, b] = Cell(cell).mean_rgb();
+	auto [r, g, b] = Cell(img).mean_rgb();
 
 	DYNAMIC_SECTION( "r" )
 	{
@@ -45,15 +42,11 @@ TEST_CASE( "CellTest/testRgbMatchesOpenCV", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets", "[unit]" )
 {
-	Image sample2 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
-	cv::Mat img;
-	cv_bridge::image_to_mat(sample2, &img);
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
-	cv::Rect crop(125, 8, 8, 8);
-	cv::Mat cell = img(crop);
-	cv::Scalar expectedColor = cv::mean(cell);
+	auto expectedColor = cv_bridge::mean_roi(img, 125, 8, 8, 8);
 
-	auto [r, g, b] = Cell(cell).mean_rgb();
+	auto [r, g, b] = Cell(img, 125, 8, 8, 8).mean_rgb();
 
 	DYNAMIC_SECTION( "r" )
 	{
@@ -71,13 +64,9 @@ TEST_CASE( "CellTest/testRgbCellOffsets", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Contiguous", "[unit]" )
 {
-	Image sample3 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
-	cv::Mat img;
-	cv_bridge::image_to_mat(sample3, &img);
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
-	cv::Rect crop(125, 8, 8, 8);
-	cv::Mat cell = img(crop);
-	cv::Scalar expectedColor = cv::mean(cell);
+	auto expectedColor = cv_bridge::mean_roi(img, 125, 8, 8, 8);
 
 	auto [r, g, b] = Cell(img, 125, 8, 8, 8).mean_rgb();
 
@@ -97,38 +86,31 @@ TEST_CASE( "CellTest/testRgbCellOffsets.Contiguous", "[unit]" )
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric", "[unit]" )
 {
-	Image sample4 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
-	cv::Mat img;
-	cv_bridge::image_to_mat(sample4, &img);
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
-	cv::Rect crop(125, 8, 4, 6);
-	cv::Mat cell = img(crop);
+	auto expectedColor = cv_bridge::mean_roi(img, 125, 8, 4, 6);
 
-	auto [r, g, b] = Cell(cell).mean_rgb();
+	auto [r, g, b] = Cell(img, 125, 8, 4, 6).mean_rgb();
 
 	DYNAMIC_SECTION( "r" )
 	{
-		assertEquals( 191, (int)r );
+		assertAlmostEquals( expectedColor[0], (int)r );
 	}
 	DYNAMIC_SECTION( "g" )
 	{
-		assertEquals( 191, (int)g );
+		assertAlmostEquals( expectedColor[1], (int)g );
 	}
 	DYNAMIC_SECTION( "b" )
 	{
-		assertEquals( 0, (int)b );
+		assertAlmostEquals( expectedColor[2], (int)b );
 	}
 }
 
 TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric.Contiguous", "[unit]" )
 {
-	Image sample5 = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
-	cv::Mat img;
-	cv_bridge::image_to_mat(sample5, &img);
+	Image img = TestCimbar::loadSample("6bit/4color_ecc30_fountain_0.png");
 
-	cv::Rect crop(126, 9, 6, 6);
-	cv::Mat cell = img(crop);
-	cv::Scalar expectedColor = cv::mean(cell);
+	auto expectedColor = cv_bridge::mean_roi(img, 126, 9, 6, 6);
 
 	auto [r, g, b] = Cell(img, 126, 9, 6, 6).mean_rgb();
 
@@ -148,30 +130,3 @@ TEST_CASE( "CellTest/testRgbCellOffsets.Asymmetric.Contiguous", "[unit]" )
 		assertEquals( 0, (int)b );
 	}
 }
-
-/*TEST_CASE( "CellTest/testRgbCellOffsets.WideCanvas", "[unit]" )
-{
-	cv::Mat img = TestCimbar::loadSample("bm/ecc35.png");
-
-	cv::Rect crop(127, 10, 6, 6);
-	cv::Mat cell = img(crop);
-	cv::Scalar expectedColor = cv::mean(cell);
-
-	auto [r, g, b] = Cell(img, 127, 10, 6, 6).mean_rgb();
-
-	DYNAMIC_SECTION( "r" )
-	{
-		assertAlmostEquals( expectedColor[0], (int)r );
-		assertEquals( 148, (int)r );
-	}
-	DYNAMIC_SECTION( "g" )
-	{
-		assertAlmostEquals( expectedColor[1], (int)g );
-		assertEquals( 0, (int)g );
-	}
-	DYNAMIC_SECTION( "b" )
-	{
-		assertAlmostEquals( expectedColor[2], (int)b );
-		assertEquals( 148, (int)b );
-	}
-}*/

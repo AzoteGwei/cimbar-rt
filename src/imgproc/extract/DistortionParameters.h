@@ -8,13 +8,13 @@
 
 #pragma once
 
-#include <opencv2/opencv.hpp>
+#include "support/image/cv_bridge.h"
 
 class DistortionParameters
 {
 public:
-	cv::Mat camera;
-	cv::Mat distortion;
+	cv_bridge::FloatMatrix camera;
+	cv_bridge::FloatMatrix distortion;
 
 public:
 	DistortionParameters()
@@ -22,13 +22,13 @@ public:
 	    , distortion()
 	{}
 
-	DistortionParameters(const cv::Mat& camera, const cv::Mat& distortion)
+	DistortionParameters(const cv_bridge::FloatMatrix& camera, const cv_bridge::FloatMatrix& distortion)
 	    : camera(camera)
 	    , distortion(distortion)
 	{}
 
 	operator bool() const
 	{
-		return camera.cols > 0;
+		return camera.rows > 0;
 	}
 };

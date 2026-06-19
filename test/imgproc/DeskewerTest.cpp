@@ -12,7 +12,6 @@
 #include "DeskewerPlus.h"
 #include "imgproc/hash/average_hash.h"
 #include "support/image/cv_bridge.h"
-#include <opencv2/opencv.hpp>
 #include <string>
 
 TEST_CASE( "DeskewerTest/testSimple", "[unit]" )
@@ -24,9 +23,7 @@ TEST_CASE( "DeskewerTest/testSimple", "[unit]" )
 	assertEquals(1024, (int)actual.cols);
 	assertEquals(1024, (int)actual.rows);
 
-	cv::Mat actual_mat;
-	cv_bridge::image_to_mat(actual, &actual_mat);
-	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(actual_mat) );
+	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(actual) );
 }
 
 TEST_CASE( "DeskewerTest/testPadded", "[unit]" )
@@ -39,8 +36,5 @@ TEST_CASE( "DeskewerTest/testPadded", "[unit]" )
 	assertEquals(1040, (int)actual.rows);
 
 	Image innerGrid = actual.roi(8, 8, 1024, 1024);
-
-	cv::Mat inner_mat;
-	cv_bridge::image_to_mat(innerGrid, &inner_mat);
-	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(inner_mat) );
+	assertEquals( 0x6e483730782fee5c, image_hash::average_hash(innerGrid) );
 }

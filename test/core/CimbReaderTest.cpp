@@ -14,7 +14,6 @@
 #include "core/codec/CimbDecoder.h"
 #include "support/text/format.h"
 #include "support/image/Image.h"
-#include <opencv2/opencv.hpp>
 
 #include <iostream>
 #include <map>
@@ -204,11 +203,16 @@ TEST_CASE( "CimbReaderTest/testCCM", "[unit]" )
 
 	assertTrue( decoder.get_ccm().active() );
 
-	std::stringstream ss;
-	ss << decoder.get_ccm().mat();
-	assertEquals("[2.3991191, -0.41846275, -0.54654282;\n "
-				 "-0.42976046, 2.632102, -0.76466882;\n "
-				 "-0.54299992, -0.20199311, 2.2753253]", ss.str());
+	const cv_bridge::Mat3x3& ccm = decoder.get_ccm().mat();
+	REQUIRE(ccm[0] == Approx(2.3991191f).epsilon(1e-5));
+	REQUIRE(ccm[1] == Approx(-0.41846275f).epsilon(1e-5));
+	REQUIRE(ccm[2] == Approx(-0.54654282f).epsilon(1e-5));
+	REQUIRE(ccm[3] == Approx(-0.42976046f).epsilon(1e-5));
+	REQUIRE(ccm[4] == Approx(2.632102f).epsilon(1e-5));
+	REQUIRE(ccm[5] == Approx(-0.76466882f).epsilon(1e-5));
+	REQUIRE(ccm[6] == Approx(-0.54299992f).epsilon(1e-5));
+	REQUIRE(ccm[7] == Approx(-0.20199311f).epsilon(1e-5));
+	REQUIRE(ccm[8] == Approx(2.2753253f).epsilon(1e-5));
 
 	std::array<unsigned, 6> expectedColors = {0, 1, 1, 2, 2, 2};
 	for (unsigned i = 0; i < expectedColors.size(); ++i)
@@ -260,11 +264,16 @@ TEST_CASE( "CimbReaderTest/testCCM.VeryNecessary", "[unit]" )
 
 	assertTrue( decoder.get_ccm().active() );
 
-	std::stringstream ss;
-	ss << decoder.get_ccm().mat();
-	assertEquals("[1.6250746, 0.0024788622, -0.45772526;\n "
-				 "-0.29126319, 2.2922182, -0.67037439;\n "
-				 "-1.2192062, -2.7447209, 5.0476217]", ss.str());
+	const cv_bridge::Mat3x3& ccm2 = decoder.get_ccm().mat();
+	REQUIRE(ccm2[0] == Approx(1.6250746f).epsilon(1e-5));
+	REQUIRE(ccm2[1] == Approx(0.0024788622f).epsilon(1e-5));
+	REQUIRE(ccm2[2] == Approx(-0.45772526f).epsilon(1e-5));
+	REQUIRE(ccm2[3] == Approx(-0.29126319f).epsilon(1e-5));
+	REQUIRE(ccm2[4] == Approx(2.2922182f).epsilon(1e-5));
+	REQUIRE(ccm2[5] == Approx(-0.67037439f).epsilon(1e-5));
+	REQUIRE(ccm2[6] == Approx(-1.2192062f).epsilon(1e-5));
+	REQUIRE(ccm2[7] == Approx(-2.7447209f).epsilon(1e-5));
+	REQUIRE(ccm2[8] == Approx(5.0476217f).epsilon(1e-5));
 
 	std::array<unsigned, 6> expectedColors = {0, 1, 1, 2, 2, 2};
 	for (unsigned i = 0; i < expectedColors.size(); ++i)

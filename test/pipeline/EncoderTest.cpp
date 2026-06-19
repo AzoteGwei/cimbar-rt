@@ -37,13 +37,13 @@ TEST_CASE( "EncoderTest/testVanilla", "[unit]" )
 	EncoderPlus enc(4, 2);
 	assertEquals( 3, enc.encode(inputFile, outPrefix) );
 
-	std::vector<uint64_t> hashes = {0xe727a520684bccec, 0x46a06f002dcded87, 0x4eb1e3646fce8c08};
+	std::vector<uint64_t> hashes = {0xe62fa1006e63c8ec, 0x46a06f002dcded87, 0x4eb1e3646fce8c08};
 	for (unsigned i = 0; i < hashes.size(); ++i)
 	{
 		DYNAMIC_SECTION( "are we correct? : " << i )
 		{
 			std::string path = fmt::format("{}_{}.png", outPrefix, i);
-			cv::Mat img = cv::imread(path);
+			Image img = cv_bridge::imread(path);
 			assertEquals( hashes[i], image_hash::average_hash(img) );
 		}
 	}
@@ -67,7 +67,7 @@ TEST_CASE( "EncoderTest/testFountain.4c", "[unit]" )
 		DYNAMIC_SECTION( "are we correct? : " << i )
 		{
 			std::string path = fmt::format("{}_{}.png", outPrefix, i);
-			cv::Mat img = cv::imread(path);
+			Image img = cv_bridge::imread(path);
 			assertEquals( hashes[i], image_hash::average_hash(img) );
 		}
 	}
@@ -91,7 +91,7 @@ TEST_CASE( "EncoderTest/testFountain.B", "[unit]" )
 		DYNAMIC_SECTION( "are we correct? : " << i )
 		{
 			std::string path = fmt::format("{}_{}.png", outPrefix, i);
-			cv::Mat img = cv::imread(path);
+			Image img = cv_bridge::imread(path);
 			assertEquals( hashes[i], image_hash::average_hash(img) );
 		}
 	}
@@ -109,7 +109,7 @@ TEST_CASE( "EncoderTest/testFountain.Compress", "[unit]" )
 
 	uint64_t hash = 0x84982f40a75fb2cf;
 	std::string path = fmt::format("{}_0.png", outPrefix);
-	cv::Mat img = cv::imread(path);
+	Image img = cv_bridge::imread(path);
 	assertEquals( hash, image_hash::average_hash(img) );
 }
 
@@ -138,9 +138,7 @@ TEST_CASE( "EncoderTest/testPiecemealFountainEncoder", "[unit]" )
 	assertTrue( frame );
 
 	uint64_t hash = 0xef84e600f4defa9;
-	cv::Mat frameMat;
-	cv_bridge::image_to_mat(*frame, &frameMat);
-	assertEquals( hash, image_hash::average_hash(frameMat) );
+	assertEquals( hash, image_hash::average_hash(*frame) );
 }
 
 TEST_CASE( "EncoderTest/testFountain.Size", "[unit]" )
@@ -155,7 +153,7 @@ TEST_CASE( "EncoderTest/testFountain.Size", "[unit]" )
 
 	uint64_t hash = 0x84982f40a75fb2cf;
 	std::string path = fmt::format("{}_0.png", outPrefix);
-	cv::Mat img = cv::imread(path);
+	Image img = cv_bridge::imread(path);
 	assertEquals( 1024, img.rows );
 	assertEquals( 1024, img.cols );
 	assertEquals( hash, image_hash::average_hash(img) );

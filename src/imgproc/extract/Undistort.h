@@ -46,10 +46,10 @@ public:
 			return false;
 
 		_params = params;
-		_maps = cv_bridge::init_undistort_rectify_map(
-			reinterpret_cast<const double*>(_params.camera.data),
-			reinterpret_cast<const double*>(_params.distortion.data),
-			width, height);
+		// DistortionParameters stores float, initUndistortRectifyMap needs double
+		std::vector<double> camera_d(_params.camera.data.begin(), _params.camera.data.end());
+		std::vector<double> dist_d(_params.distortion.data.begin(), _params.distortion.data.end());
+		_maps = cv_bridge::init_undistort_rectify_map(camera_d.data(), dist_d.data(), width, height);
 		return true;
 	}
 

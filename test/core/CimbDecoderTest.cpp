@@ -17,7 +17,6 @@
 #include "support/text/format.h"
 #include "support/image/Image.h"
 #include "support/image/cv_bridge.h"
-#include <opencv2/opencv.hpp>
 
 #include <iostream>
 #include <string>
@@ -62,16 +61,16 @@ TEST_CASE( "CimbDecoderTest/testPrethresholdDecode", "[unit]" )
 	for (unsigned i = 0; i < 16; ++i)
 	{
 		Image tile = cimbar::getTile(4, i, true);
-		cv::Mat tileMat(tile.rows, tile.cols, CV_8UC(tile.channels()), tile.data, tile.stride);
-		cv::Mat tenxten(10, 10, tileMat.type(), cv::Scalar(0, 0, 0));
-		tileMat.copyTo(tenxten(cv::Rect(cv::Point(1, 1), tileMat.size())));
+		Image tenxten = cv_bridge::create(10, 10, tile.channels());
+		cv_bridge::copy_to(tile, tenxten, 1, 1);
 
 		// grayscale and threshold, since that's what average_hash needs
-		cv::cvtColor(tenxten, tenxten, cv::COLOR_RGB2GRAY);
-		cv::adaptiveThreshold(tenxten, tenxten, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 9, 0);
+		Image gray;
+		cv_bridge::cvt_color(tenxten, gray, cv_bridge::COLOR_RGB2GRAY);
+		cv_bridge::adaptive_threshold(gray, gray, 255, 9, 0);
 
 		bitbuffer bb((100/8) + 1);
-		bitmatrix::mat_to_bitbuffer(tenxten, bb.get_writer());
+		bitmatrix::mat_to_bitbuffer(gray, bb.get_writer());
 		bitmatrix bm(bb, 10, 10);
 
 		unsigned drift_offset;

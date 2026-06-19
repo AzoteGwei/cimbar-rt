@@ -118,7 +118,12 @@ public:
 		if (empty())
 			return {};
 		Image out(width, height, _channels);
-		std::memcpy(out.data, data, total());
+		unsigned row_bytes = width * _channels;
+		if (stride == row_bytes)
+			std::memcpy(out.data, data, row_bytes * height);
+		else
+			for (unsigned i = 0; i < height; ++i)
+				std::memcpy(out.data + i * row_bytes, data + i * stride, row_bytes);
 		return out;
 	}
 

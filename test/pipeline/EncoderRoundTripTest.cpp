@@ -42,11 +42,10 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.Pad", "[unit]" )
 
 	uint64_t hash = 0xeecc8800efcea808;
 	std::string path = fmt::format("{}_0.png", outPrefix);
-	cv::Mat encodedImg = cv::imread(path);
-	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
+	Image encodedImg = cv_bridge::imread(path);
 	assertEquals( hash, image_hash::average_hash(encodedImg) );
 
-	Image encodedForDecode = cv_bridge::clone_from_mat(encodedImg);
+	Image encodedForDecode = encodedImg.clone();
 
 	SECTION ("default filename") {
 		// decoder
@@ -95,11 +94,10 @@ TEST_CASE( "EncoderRoundTripTest/testFountain.SinkMismatch", "[unit]" )
 
 	uint64_t hash = 0xae4c8c00efce9c28;
 	std::string path = fmt::format("{}_0.png", outPrefix);
-	cv::Mat encodedImg = cv::imread(path);
-	cv::cvtColor(encodedImg, encodedImg, cv::COLOR_BGR2RGB);
+	Image encodedImg = cv_bridge::imread(path);
 	assertEquals( hash, image_hash::average_hash(encodedImg) );
 
-	Image encodedForDecode = cv_bridge::clone_from_mat(encodedImg);
+	Image encodedForDecode = encodedImg.clone();
 
 	// decoder
 	Decoder dec;

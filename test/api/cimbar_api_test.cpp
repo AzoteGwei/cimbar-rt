@@ -22,7 +22,6 @@
 
 #include "core/codec/CimbWriter.h"
 #include "core/codec/Config.h"
-#include <opencv2/opencv.hpp>
 
 namespace {
 	std::string random_string(unsigned len)

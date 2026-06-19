@@ -12,8 +12,6 @@
 #include "imgproc/hash/average_hash.h"
 
 #include "support/image/Image.h"
-#include <opencv2/opencv.hpp>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -30,8 +28,7 @@ TEST_CASE( "CimbWriterTest/testSimple", "[unit]" )
 	const Image& img = cw.image();
 	assertEquals(1024, img.cols);
 	assertEquals(1024, img.rows);
-	cv::Mat imgMat(img.rows, img.cols, CV_8UC(img.channels()), img.data, img.stride);
-	assertEquals( 0xeecc8800efce8c08, image_hash::average_hash(imgMat) );
+	assertEquals( 0xeecc8800efce8c08, image_hash::average_hash(img) );
 }
 
 TEST_CASE( "CimbWriterTest/testCustomSize", "[unit]" )
@@ -47,8 +44,7 @@ TEST_CASE( "CimbWriterTest/testCustomSize", "[unit]" )
 	const Image& img = cw.image();
 	assertEquals(1040, img.cols);
 	assertEquals(1040, img.rows);
-	cv::Mat imgMat(img.rows, img.cols, CV_8UC(img.channels()), img.data, img.stride);
-	assertEquals( 0xab00ab02af0abfab, image_hash::average_hash(imgMat) );
+	assertEquals( 0xab00ab02af0abfab, image_hash::average_hash(img) );
 }
 
 TEST_CASE( "CimbWriterTest/testCustomSize.2", "[unit]" )
@@ -64,6 +60,5 @@ TEST_CASE( "CimbWriterTest/testCustomSize.2", "[unit]" )
 	const Image& img = cw.image();
 	assertEquals(1040, img.cols);
 	assertEquals(1080, img.rows);
-	cv::Mat imgMat(img.rows, img.cols, CV_8UC(img.channels()), img.data, img.stride);
-	assertEquals( 0xab2a2a2a2a2a2aab, image_hash::average_hash(imgMat) );
+	assertEquals( 0xab2a2a2a2a2a2aab, image_hash::average_hash(img) );
 }

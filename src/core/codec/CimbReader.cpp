@@ -252,13 +252,7 @@ void CimbReader::init_ccm(unsigned color_bits, unsigned interleave_blocks, unsig
 
 	// generate ccm from avgs, save in decoder
 	cv_bridge::Mat3x3 ccm = cv_bridge::moore_penrose_lsm(actual.data.data(), desired.data.data(), actual.rows);
-	// ponytail: color_correction 还接受 cv::Matx，等 Phase 2.6 改为接受 Mat3x3
-	cv::Matx<float, 3, 3> ccm_mat(
-		ccm[0], ccm[1], ccm[2],
-		ccm[3], ccm[4], ccm[5],
-		ccm[6], ccm[7], ccm[8]
-	);
-	_decoder.update_color_correction(std::move(ccm_mat));
+	_decoder.update_color_correction(std::move(ccm));
 }
 
 void CimbReader::update_metadata(char* buff, unsigned len, unsigned chunk_size)

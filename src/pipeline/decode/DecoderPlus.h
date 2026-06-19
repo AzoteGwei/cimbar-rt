@@ -45,9 +45,10 @@ inline bool DecoderPlus::load_ccm(std::string filename)
 	if (data.size() < 3*3*4)
 		return false;
 
-	// ponytail: color_correction 还接受 cv::Matx，等 Phase 2.6
-	cv::Mat temp(3, 3, CV_32F, data.data());
-	_decoder.update_color_correction(temp);
+	// Mat3x3 is std::array<float, 9>, layout matches file format
+	cv_bridge::Mat3x3 ccm;
+	std::memcpy(ccm.data(), data.data(), 9 * sizeof(float));
+	_decoder.update_color_correction(std::move(ccm));
 	return true;
 }
 
@@ -56,11 +57,9 @@ inline bool DecoderPlus::save_ccm(std::string filename)
 	if (not _decoder.get_ccm().active())
 		return false;
 
-	// ponytail: color_correction 还返回 cv::Matx，等 Phase 2.6
-	cv::Mat temp(_decoder.get_ccm().mat());
-
+	const cv_bridge::Mat3x3& ccm = _decoder.get_ccm().mat();
 	File f(filename, true);
-	if (f.write(reinterpret_cast<const char*>(temp.data), temp.rows * temp.cols * temp.elemSize()) == 0)
+	if (f.write(reinterpret_cast<const char*>(ccm.data()), ccm.size() * sizeof(float)) == 0)
 		return false;
 	return true;
 }

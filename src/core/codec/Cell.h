@@ -9,8 +9,8 @@
 #pragma once
 
 #include "support/image/Image.h"
-#include <opencv2/opencv.hpp>
 
+#include <cstdint>
 #include <tuple>
 
 class Cell
@@ -44,32 +44,7 @@ public:
 		, _rows(rows)
 	{}
 
-	Cell(const cv::Mat& img)
-		: _data(img.ptr<uchar>(0))
-		, _img_stride(img.step[0])
-		, _img_width(img.cols)
-		, _img_height(img.rows)
-		, _img_channels(img.channels())
-		, _xstart(0)
-		, _ystart(0)
-		, _cols(img.cols)
-		, _rows(img.rows)
-	{
-	}
-
-	Cell(const cv::Mat& img, int xstart, int ystart, int cols, int rows)
-		: _data(img.ptr<uchar>(0))
-		, _img_stride(img.step[0])
-		, _img_width(img.cols)
-		, _img_height(img.rows)
-		, _img_channels(img.channels())
-		, _xstart(xstart)
-		, _ystart(ystart)
-		, _cols(cols)
-		, _rows(rows)
-	{}
-
-	std::tuple<uchar,uchar,uchar> mean_rgb_continuous(bool skip) const
+	std::tuple<uint8_t,uint8_t,uint8_t> mean_rgb_continuous(bool skip) const
 	{
 		uint16_t blue = 0;
 		uint16_t green = 0;
@@ -78,7 +53,7 @@ public:
 
 		int channels = _img_channels;
 		int index = (_ystart * _img_width) + _xstart;
-		const uchar* p = _data + (index * channels);
+		const uint8_t* p = _data + (index * channels);
 
 		int increment = 1 + skip;
 		int toNextRow = channels * (_img_width - _cols);
@@ -98,16 +73,16 @@ public:
 		}
 
 		if (!count)
-			return std::tuple<uchar,uchar,uchar>(0, 0, 0);
+			return std::tuple<uint8_t,uint8_t,uint8_t>(0, 0, 0);
 
-		return std::tuple<uchar,uchar,uchar>(red/count, green/count, blue/count);
+		return std::tuple<uint8_t,uint8_t,uint8_t>(red/count, green/count, blue/count);
 	}
 
-	std::tuple<uchar,uchar,uchar> mean_rgb(bool skip=false) const
+	std::tuple<uint8_t,uint8_t,uint8_t> mean_rgb(bool skip=false) const
 	{
 		int channels = _img_channels;
 		if (channels < 3)
-			return std::tuple<uchar,uchar,uchar>(0, 0, 0);
+			return std::tuple<uint8_t,uint8_t,uint8_t>(0, 0, 0);
 		if (_img_stride == _img_width * _img_channels && _cols > 0)
 			return mean_rgb_continuous(skip);
 
@@ -117,11 +92,10 @@ public:
 		uint16_t count = 0;
 
 		int increment = 1 + skip;
-		int yend = _img_height * _img_channels;
-		for (int i = 0; i < _img_width; i+=increment)
+		for (int i = 0; i < _rows; i+=increment)
 		{
-			const uchar* p = _data + i * _img_stride;
-			for (int j = 0; j < yend; j+=_img_channels, ++count)
+			const uint8_t* p = _data + (i + _ystart) * _img_stride + _xstart * _img_channels;
+			for (int j = 0; j < _cols * _img_channels; j+=_img_channels, ++count)
 			{
 				red += p[j];
 				green += p[j+1];
@@ -130,18 +104,18 @@ public:
 		}
 
 		if (!count)
-			return std::tuple<uchar,uchar,uchar>(0, 0, 0);
+			return std::tuple<uint8_t,uint8_t,uint8_t>(0, 0, 0);
 
-		return std::tuple<uchar,uchar,uchar>(red/count, green/count, blue/count);
+		return std::tuple<uint8_t,uint8_t,uint8_t>(red/count, green/count, blue/count);
 	}
 
-	uchar mean_grayscale_continuous() const
+	uint8_t mean_grayscale_continuous() const
 	{
 		uint16_t total = 0;
 		uint16_t count = 0;
 
 		int index = (_ystart * _img_width) + _xstart;
-		const uchar* p = _data + index;
+		const uint8_t* p = _data + index;
 		int toNextCol = _img_height - _rows;
 
 		for (int i = 0; i < _img_width; ++i)
@@ -153,10 +127,10 @@ public:
 
 		if (!count)
 			return 0;
-		return (uchar)(total/count);
+		return (uint8_t)(total/count);
 	}
 
-	uchar mean_grayscale() const
+	uint8_t mean_grayscale() const
 	{
 		if (_img_channels > 1)
 			return 0;
@@ -166,16 +140,16 @@ public:
 		uint16_t total = 0;
 		uint16_t count = 0;
 
-		for (int i = 0; i < _img_width; ++i)
+		for (int i = 0; i < _rows; ++i)
 		{
-			const uchar* p = _data + i * _img_stride;
-			for (int j = 0; j < _img_height; ++j, ++count)
+			const uint8_t* p = _data + (i + _ystart) * _img_stride + _xstart;
+			for (int j = 0; j < _cols; ++j, ++count)
 				total += p[j];
 		}
 
 		if (!count)
 			return 0;
-		return (uchar)(total/count);
+		return (uint8_t)(total/count);
 	}
 
 	void crop(int x, int y, int cols, int rows)
@@ -197,7 +171,7 @@ public:
 	}
 
 protected:
-	const uchar* _data;
+	const uint8_t* _data;
 	int _img_stride;
 	int _img_width;
 	int _img_height;

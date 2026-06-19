@@ -13,11 +13,6 @@
 
 #include "DistortionParameters.h"
 #include "support/image/cv_bridge.h"
-#include <opencv2/opencv.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
 
 TEST_CASE( "SimpleCameraCalibrationTest/testGetParams", "[unit]" )
 {
@@ -26,14 +21,24 @@ TEST_CASE( "SimpleCameraCalibrationTest/testGetParams", "[unit]" )
 	SimpleCameraCalibration scc;
 	DistortionParameters dp = scc.scan(img);
 
-	std::stringstream cam;
-	cam << dp.camera;
+	// camera matrix 3x3
+	assertEquals(3, dp.camera.rows);
+	assertEquals(3, dp.camera.cols);
+	assertEquals(320.0f, dp.camera.at(0, 0));
+	assertEquals(0.0f, dp.camera.at(0, 1));
+	assertEquals(640.0f, dp.camera.at(0, 2));
+	assertEquals(0.0f, dp.camera.at(1, 0));
+	assertEquals(240.0f, dp.camera.at(1, 1));
+	assertEquals(480.0f, dp.camera.at(1, 2));
+	assertEquals(0.0f, dp.camera.at(2, 0));
+	assertEquals(0.0f, dp.camera.at(2, 1));
+	assertEquals(1.0f, dp.camera.at(2, 2));
 
-	std::stringstream dis;
-	dis << dp.distortion;
-
-	assertEquals( "[320, 0, 640;\n"
-	              " 0, 240, 480;\n"
-	              " 0, 0, 1]", cam.str() );
-	assertEquals( "[-0.001308300426007405, 0, 0, 0]", dis.str() );
+	// distortion 1x4
+	assertEquals(1, dp.distortion.rows);
+	assertEquals(4, dp.distortion.cols);
+	REQUIRE(dp.distortion.at(0, 0) == Approx(-0.001308300426007405f).epsilon(1e-6));
+	assertEquals(0.0f, dp.distortion.at(0, 1));
+	assertEquals(0.0f, dp.distortion.at(0, 2));
+	assertEquals(0.0f, dp.distortion.at(0, 3));
 }

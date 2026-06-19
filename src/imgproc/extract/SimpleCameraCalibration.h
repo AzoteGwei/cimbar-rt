@@ -57,7 +57,15 @@ inline DistortionParameters SimpleCameraCalibration::naive_radial_undistort(int 
 	// we're treating distortion_factor as being close to k1
 	DistortionParameters dp;
 
-	dp.camera = (cv::Mat1d(3, 3) << width/4, 0, width/2, 0, height/4, height/2, 0, 0, 1);
-	dp.distortion = (cv::Mat1d(1, 4) << distortion_factor, 0, 0, 0);
+	dp.camera = cv_bridge::FloatMatrix(3, 3);
+	double camera_data[] = {width/4.0, 0, width/2.0, 0, height/4.0, height/2.0, 0, 0, 1};
+	for (int i = 0; i < 9; ++i)
+		dp.camera.data[i] = static_cast<float>(camera_data[i]);
+
+	dp.distortion = cv_bridge::FloatMatrix(1, 4);
+	dp.distortion.data[0] = static_cast<float>(distortion_factor);
+	dp.distortion.data[1] = 0;
+	dp.distortion.data[2] = 0;
+	dp.distortion.data[3] = 0;
 	return dp;
 }

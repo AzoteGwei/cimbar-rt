@@ -13,9 +13,9 @@
 #include "support/bit/bitmatrix.h"
 #include "core/codec/Cell.h"
 #include "support/os/compiler_constants.h"
+#include "support/image/cv_bridge.h"
 
 #include "intx/intx.hpp"
-#include <opencv2/opencv.hpp>
 
 #include <array>
 #include <bitset>
@@ -23,45 +23,48 @@
 
 namespace image_hash
 {
-	inline uint64_t average_hash(const cv::Mat& img, uchar threshold=0)
+	inline uint64_t average_hash(const Image& img, uint8_t threshold=0)
 	{
-		cv::Mat gray = img;
+		Image gray;
 		if (img.channels() != 1)
-			cv::cvtColor(gray, gray, cv::COLOR_RGB2GRAY);
-		if (gray.cols > 8 or gray.rows > 8)
-			cv::resize(gray, gray, cv::Size(8, 8));
+			cv_bridge::cvt_color(img, gray, cv_bridge::COLOR_RGB2GRAY);
+		else
+			gray = img.clone();
+		if (gray.width > 8 or gray.height > 8)
+			cv_bridge::resize(gray, gray, 8, 8);
 
 		if (threshold == 0)
 			threshold = Cell(gray).mean_grayscale();
 
 		uint64_t res = 0;
-		int bitpos = gray.rows*gray.cols - 1; // ex: 8*8 - 1
-		for (int i = 0; i < gray.rows; ++i)
+		int bitpos = gray.height * gray.width - 1;
+		for (unsigned i = 0; i < gray.height; ++i)
 		{
-			const uchar* p = gray.ptr<uchar>(i);
-			for (int j = 0; j < gray.cols; ++j, --bitpos)
+			const uint8_t* p = gray.ptr(i);
+			for (unsigned j = 0; j < gray.width; ++j, --bitpos)
 				res |= (uint64_t)(p[j] > threshold) << bitpos;
 		}
 		return res;
 	}
 
 	template <unsigned CELLSIZE>
-	inline ahash_result<CELLSIZE> fuzzy_ahash(const cv::Mat& img, uchar threshold=0, unsigned mode=ahash_result<CELLSIZE>::ALL)
+	inline ahash_result<CELLSIZE> fuzzy_ahash(const Image& img, uint8_t threshold=0, unsigned mode=ahash_result<CELLSIZE>::ALL)
 	{
-		// return 9 uint64_ts, each representing a 5x5 section of the 7x7 img, an 8x8 section of an 10x10 img, etc
-		cv::Mat gray = img;
+		Image gray;
 		if (img.channels() != 1)
-			cv::cvtColor(gray, gray, cv::COLOR_RGB2GRAY);
+			cv_bridge::cvt_color(img, gray, cv_bridge::COLOR_RGB2GRAY);
+		else
+			gray = img.clone();
 
 		if (threshold == 0)
 			threshold = Cell(gray).mean_grayscale();
 
 		intx::uint128 res(0);
-		int bitpos = gray.cols*gray.rows - 1; // 8*8 - 1
-		for (int i = 0; i < gray.rows; ++i)
+		int bitpos = gray.width * gray.height - 1;
+		for (unsigned i = 0; i < gray.height; ++i)
 		{
-			const uchar* p = gray.ptr<uchar>(i);
-			for (int j = 0; j < gray.cols; ++j, --bitpos)
+			const uint8_t* p = gray.ptr(i);
+			for (unsigned j = 0; j < gray.width; ++j, --bitpos)
 				res |= intx::uint128(p[j] > threshold) << bitpos;
 		}
 		return ahash_result<CELLSIZE>(res, mode);

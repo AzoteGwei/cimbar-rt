@@ -24,7 +24,7 @@ public:
 	CimbDecoder(unsigned symbol_bits, unsigned color_bits, bool dark=true, uchar ahashThreshold=0);
 
 	const color_correction& get_ccm() const;
-	void update_color_correction(cv::Matx<float, 3, 3>&& ccm);
+	void update_color_correction(cv_bridge::Mat3x3&& ccm);
 
 	unsigned get_best_symbol(image_hash::ahash_result<cimbar::Config::cell_size()>& results, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;
 	unsigned decode_symbol(const Image& cell, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown=0xFF) const;

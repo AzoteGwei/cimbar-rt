@@ -11,8 +11,8 @@
 
 #include "ExtractorPlus.h"
 #include "imgproc/hash/average_hash.h"
+#include "support/image/cv_bridge.h"
 #include "support/os/MakeTempDirectory.h"
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -24,8 +24,7 @@ TEST_CASE( "ExtractorTest/testExtract", "[unit]" )
 	ExtractorPlus ext(0, {1024, 1024}, 30);
 	ext.extract(TestCimbar::getSample("6bit/4_30_f0_big.jpg"), imgPath);
 
-	cv::Mat out = cv::imread(imgPath);
-	cv::cvtColor(out, out, cv::COLOR_BGR2RGB);
+	Image out = cv_bridge::imread(imgPath);
 	assertEquals( 0x2cab639cfa72624, image_hash::average_hash(out) );
 }
 
@@ -37,8 +36,7 @@ TEST_CASE( "ExtractorTest/testExtractMid", "[unit]" )
 	ExtractorPlus ext(0, {1024, 1024}, 30);
 	ext.extract(TestCimbar::getSample("6bit/4_30_f2_734.jpg"), imgPath);
 
-	cv::Mat out = cv::imread(imgPath);
-	cv::cvtColor(out, out, cv::COLOR_BGR2RGB);
+	Image out = cv_bridge::imread(imgPath);
 	assertEquals( 0xc7f8205e686bc02, image_hash::average_hash(out) );
 }
 
@@ -50,8 +48,7 @@ TEST_CASE( "ExtractorTest/testExtractUpscale", "[unit]" )
 	ExtractorPlus ext(0, {1024, 1024}, 30);
 	ext.extract(TestCimbar::getSample("6bit/4_30_f0_627.jpg"), imgPath);
 
-	cv::Mat out = cv::imread(imgPath);
-	cv::cvtColor(out, out, cv::COLOR_BGR2RGB);
+	Image out = cv_bridge::imread(imgPath);
 	assertEquals( 0x29c64eaca3356394, image_hash::average_hash(out) );
 }
 

@@ -14,9 +14,8 @@
 #include "imgproc/hash/hamming_distance.h"
 #include "support/text/format.h"
 #include "support/os/compiler_constants.h"
-#include "support/image/cv_bridge.h"
+#include "support/image/Image.h"
 
-#include <opencv2/opencv.hpp>
 #include <algorithm>
 #include <iostream>
 #include <tuple>
@@ -88,7 +87,7 @@ const color_correction& CimbDecoder::get_ccm() const
 	return internal_ccm();
 }
 
-void CimbDecoder::update_color_correction(cv::Matx<float, 3, 3>&& ccm)
+void CimbDecoder::update_color_correction(cv_bridge::Mat3x3&& ccm)
 {
 	internal_ccm().update(std::move(ccm));
 }
@@ -96,10 +95,7 @@ void CimbDecoder::update_color_correction(cv::Matx<float, 3, 3>&& ccm)
 uint64_t CimbDecoder::get_tile_hash(unsigned symbol) const
 {
 	Image tile = cimbar::getTile(_symbolBits, symbol, _dark, _numColors);
-	// ponytail: average_hash 还接受 cv::Mat，等 Phase 2.4 改为接受 Image
-	cv::Mat mat;
-	cv_bridge::image_to_mat(tile, &mat);
-	return image_hash::average_hash(mat);
+	return image_hash::average_hash(tile);
 }
 
 bool CimbDecoder::load_tiles()
@@ -145,11 +141,8 @@ unsigned CimbDecoder::get_best_symbol(image_hash::ahash_result<cimbar::Config::c
 
 unsigned CimbDecoder::decode_symbol(const Image& cell, unsigned& drift_offset, unsigned& best_distance, unsigned cooldown) const
 {
-	// ponytail: average_hash 还接受 cv::Mat，等 Phase 2.4 改为接受 Image
-	cv::Mat mat;
-	cv_bridge::image_to_mat(cell, &mat);
 	image_hash::ahash_result<cimbar::Config::cell_size()> results = image_hash::fuzzy_ahash<cimbar::Config::cell_size()>(
-		mat, _ahashThreshold, image_hash::ahash_result<cimbar::Config::cell_size()>::FAST
+		cell, _ahashThreshold, image_hash::ahash_result<cimbar::Config::cell_size()>::FAST
 	);
 	return get_best_symbol(results, drift_offset, best_distance, cooldown);
 }
