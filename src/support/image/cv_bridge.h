@@ -50,12 +50,7 @@ namespace cv_bridge
 	};
 
 	// ====== 转换 ======
-	Image from_cv(const uint8_t* data, unsigned w, unsigned h, unsigned channels, unsigned stride);
 	Image from_cv_clone(const uint8_t* data, unsigned w, unsigned h, unsigned channels);
-
-	// Image ↔ cv::Mat 转换（过渡期使用）
-	Image mat_to_image(const void* mat_ptr);
-	void image_to_mat(const Image& img, void* mat_out);
 
 	// ====== I/O ======
 	Image imread(const std::string& path);
@@ -84,9 +79,6 @@ namespace cv_bridge
 
 	// cv::Mat 兼容重载
 	void gaussian_blur(const cv::Mat& src, Image& dst, int ksize);
-
-	// 通用克隆：cv::Mat → Image
-	Image clone_from_mat(const cv::Mat& mat);
 
 	// ====== 几何变换 ======
 	void warp_perspective(const Image& src, Image& dst,

@@ -53,37 +53,11 @@ static cv::ColorConversionCodes to_cv_color(ColorCode code)
 
 // ====== 转换 ======
 
-Image from_cv(const uint8_t* data, unsigned w, unsigned h, unsigned channels, unsigned stride)
-{
-	Image img;
-	img.data = const_cast<uint8_t*>(data);
-	img.width = w;
-	img.height = h;
-	// ponytail: 直接设置 _channels 通过构造
-	img = Image(const_cast<uint8_t*>(data), w, h, channels);
-	img.stride = stride; // 覆盖默认 stride
-	return img;
-}
-
 Image from_cv_clone(const uint8_t* data, unsigned w, unsigned h, unsigned channels)
 {
 	Image img(w, h, channels);
 	std::memcpy(img.data, data, img.total());
 	return img;
-}
-
-Image mat_to_image(const void* mat_ptr)
-{
-	const cv::Mat& mat = *static_cast<const cv::Mat*>(mat_ptr);
-	if (mat.empty())
-		return {};
-	return from_cv_mat(mat);
-}
-
-void image_to_mat(const Image& img, void* mat_out)
-{
-	cv::Mat& out = *static_cast<cv::Mat*>(mat_out);
-	out = to_cv(img).clone();
 }
 
 // ====== I/O ======
@@ -182,11 +156,6 @@ void gaussian_blur(const cv::Mat& src, Image& dst, int ksize)
 	cv::Mat cv_dst;
 	cv::GaussianBlur(src, cv_dst, cv::Size(ksize, ksize), 0);
 	dst = from_cv_mat(cv_dst);
-}
-
-Image clone_from_mat(const cv::Mat& mat)
-{
-	return from_cv_mat(mat);
 }
 
 void filter2D(const Image& src, Image& dst, const float* kernel_data, int ksize)
