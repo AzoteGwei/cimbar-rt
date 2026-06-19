@@ -70,15 +70,6 @@ namespace {
 		alloc->free(alloc->context, obj);
 	}
 
-	static inline std::string error_string_from(const std::string& s)
-	{
-		return s;
-	}
-
-	static inline std::string error_string_from(const char* s)
-	{
-		return s ? s : "";
-	}
 }
 
 

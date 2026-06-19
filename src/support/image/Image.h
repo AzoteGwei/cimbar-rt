@@ -32,9 +32,9 @@ public:
 	Image(unsigned w, unsigned h, unsigned ch, uint8_t fill = 0)
 		: width(w)
 		, height(h)
-		, _channels(ch)
 		, stride(w * ch)
 		, owns_data(true)
+		, _channels(ch)
 	{
 		data = new uint8_t[stride * height];
 		std::memset(data, fill, stride * height);
@@ -44,9 +44,9 @@ public:
 		: data(d)
 		, width(w)
 		, height(h)
-		, _channels(ch)
 		, stride(w * ch)
 		, owns_data(false)
+		, _channels(ch)
 	{
 	}
 
@@ -63,9 +63,9 @@ public:
 		: data(o.data)
 		, width(o.width)
 		, height(o.height)
-		, _channels(o._channels)
 		, stride(o.stride)
 		, owns_data(o.owns_data)
+		, _channels(o._channels)
 	{
 		o.data = nullptr;
 		o.owns_data = false;

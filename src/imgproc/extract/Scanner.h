@@ -121,11 +121,11 @@ inline bool Scanner::will_it_scan(const MAT& unpadded_img)
 	Corners corners(points);
 	if (corners.top_left().x() > limit or corners.top_left().y() > limit)
 		return false;
-	if (corners.top_right().x() < (unpadded_img.cols - limit) or corners.top_right().y() > limit)
+	if (corners.top_right().x() < static_cast<int>(unpadded_img.cols - limit) or corners.top_right().y() > limit)
 		return false;
-	if (corners.bottom_left().x() > limit or corners.bottom_left().y() < (unpadded_img.rows - limit))
+	if (corners.bottom_left().x() > limit or corners.bottom_left().y() < static_cast<int>(unpadded_img.rows - limit))
 		return false;
-	if (corners.bottom_right().x() < (unpadded_img.cols - limit) or corners.bottom_right().y() < (unpadded_img.rows - limit))
+	if (corners.bottom_right().x() < static_cast<int>(unpadded_img.cols - limit) or corners.bottom_right().y() < static_cast<int>(unpadded_img.rows - limit))
 		return false;
 	return true;
 }
@@ -162,7 +162,7 @@ inline void Scanner::preprocess_image(const MAT& img, MAT2& out, bool fast)
 	{
 		// ponytail: 通用单通道转换，对 cv::Mat 和 Image 都有效
 		Image gray_img(img.cols, img.rows, 1);
-		for (int r = 0; r < img.rows; ++r)
+			for (unsigned r = 0; r < img.rows; ++r)
 			std::memcpy(gray_img.ptr(r), img.ptr(r), img.cols);
 		temp_img = std::move(gray_img);
 	}
@@ -192,7 +192,7 @@ inline bool Scanner::scan_horizontal(std::vector<Anchor>& points, int y, int xst
 {
 	if (xstart < 0)
 		xstart = 0;
-	if (xend < 0 or xend > _img.cols)
+	if (xend < 0 or xend > static_cast<int>(_img.cols))
 		xend = _img.cols;
 
 	unsigned initCount = points.size();
@@ -224,7 +224,7 @@ inline bool Scanner::scan_vertical(std::vector<Anchor>& points, int x, int xmax,
 
 	if (ystart < 0)
 		ystart = 0;
-	if (yend < 0 or yend > _img.rows)
+	if (yend < 0 or yend > static_cast<int>(_img.rows))
 		yend = _img.rows;
 
 	unsigned initCount = points.size();
@@ -294,7 +294,7 @@ CIMBAR_FLATTEN inline void Scanner::t1_scan_rows(std::function<void(const Anchor
 		skip = _skip;
 	if (y < 0)
 		y = skip;
-	if (yend < 0 or yend > _img.rows)
+	if (yend < 0 or yend > static_cast<int>(_img.rows))
 		yend = _img.rows;
 
 	std::vector<Anchor> points;

@@ -15,7 +15,7 @@
 class FountainEncoder
 {
 protected:
-	void swap(FountainEncoder& other) throw()
+	void swap(FountainEncoder& other) noexcept
 	{
 		std::swap(_codec, other._codec);
 		std::swap(_packetSize, other._packetSize);

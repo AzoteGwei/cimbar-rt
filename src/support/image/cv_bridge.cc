@@ -62,6 +62,7 @@ Image from_cv_clone(const uint8_t* data, unsigned w, unsigned h, unsigned channe
 
 // ====== I/O ======
 
+#ifndef __EMSCRIPTEN__
 Image imread(const std::string& path)
 {
 	cv::Mat bgr = cv::imread(path, cv::IMREAD_COLOR);
@@ -81,6 +82,7 @@ bool imwrite(const std::string& path, const Image& img)
 	cv::cvtColor(rgb, bgr, cv::COLOR_RGB2BGR);
 	return cv::imwrite(path, bgr);
 }
+#endif
 
 // ====== 颜色转换 ======
 

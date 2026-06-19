@@ -53,8 +53,10 @@ namespace cv_bridge
 	Image from_cv_clone(const uint8_t* data, unsigned w, unsigned h, unsigned channels);
 
 	// ====== I/O ======
+#ifndef __EMSCRIPTEN__
 	Image imread(const std::string& path);
 	bool imwrite(const std::string& path, const Image& img);
+#endif
 
 	// ====== 颜色转换 ======
 	void cvt_color(const Image& src, Image& dst, ColorCode code);

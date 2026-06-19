@@ -17,12 +17,15 @@ public:
 	using Deskewer::Deskewer;
 	using Deskewer::deskew;
 
+#ifndef __EMSCRIPTEN__
 	Image deskew(std::string img, const Corners& corners);
 	bool save(const Image& img, std::string path);
+#endif
 
 protected:
 };
 
+#ifndef __EMSCRIPTEN__
 inline Image DeskewerPlus::deskew(std::string img, const Corners& corners)
 {
 	Image mat = cv_bridge::imread(img);
@@ -33,3 +36,4 @@ inline bool DeskewerPlus::save(const Image& img, std::string path)
 {
 	return cv_bridge::imwrite(path, img);
 }
+#endif

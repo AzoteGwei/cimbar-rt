@@ -73,7 +73,7 @@ public:
 protected:
 	bool check_scaling(const point<int>& a, const point<int>& b, cimbar::vec_xy min_size) const
 	{
-		return abs(a.x() - b.x()) > min_size.width() or abs(a.y() - b.y()) > min_size.height();
+		return static_cast<unsigned>(abs(a.x() - b.x())) > min_size.width() or static_cast<unsigned>(abs(a.y() - b.y())) > min_size.height();
 	}
 
 protected:

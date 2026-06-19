@@ -19,12 +19,15 @@ public:
 	using Extractor::Extractor;
 	using Extractor::extract;
 
+#ifndef __EMSCRIPTEN__
 	int extract(std::string read_path, Image& out);
 	int extract(std::string read_path, std::string write_path);
+#endif
 
 protected:
 };
 
+#ifndef __EMSCRIPTEN__
 inline int ExtractorPlus::extract(std::string read_path, Image& out)
 {
 	Image img = cv_bridge::imread(read_path);
@@ -40,3 +43,4 @@ inline int ExtractorPlus::extract(std::string read_path, std::string write_path)
 	cv_bridge::imwrite(write_path, img);
 	return res;
 }
+#endif
