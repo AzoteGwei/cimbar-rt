@@ -10,6 +10,7 @@
 
 #include "support/image/Image.h"
 #include "support/image/cv_bridge.h"
+#include "support/bit/bitmatrix.h"
 #include <cstring>
 
 TEST_CASE( "ImageTest/testCreate", "[unit]" )
@@ -375,4 +376,67 @@ TEST_CASE( "cv_bridgeTest/testImreadImwrite", "[unit]" )
 	assertEquals( 3u, loaded.channels() );
 	// pixel values should be close (lossy PNG compression might differ slightly)
 	assertAlmostEquals( 100, (int)loaded.ptr(0)[0] );
+}
+
+TEST_CASE( "ImageTest/testCloneRoi", "[unit]" )
+{
+	// Regression: clone() on ROI must copy row-by-row respecting source stride
+	Image parent(10, 10, 1, 0);
+	for (unsigned i = 0; i < 100; ++i)
+		parent.data[i] = i;
+
+	Image roi = parent.roi(2, 3, 4, 5);
+	assertEquals( 4u, roi.width );
+	assertEquals( 5u, roi.height );
+	assertTrue( roi.stride > roi.width ); // stride is parent's stride
+
+	Image cloned = roi.clone();
+	assertTrue( cloned.owns_data );
+	assertEquals( 4u, cloned.width );
+	assertEquals( 5u, cloned.height );
+	assertEquals( 4u, cloned.stride ); // stride = width * channels for owned image
+
+	// verify pixel data matches ROI
+	for (unsigned y = 0; y < 5; ++y)
+		for (unsigned x = 0; x < 4; ++x)
+			assertEquals( roi.ptr(y)[x], cloned.ptr(y)[x] );
+}
+
+TEST_CASE( "cv_bridgeTest/testRemap", "[unit]" )
+{
+	// identity distortion map
+	double camera[] = {100, 0, 50, 0, 100, 50, 0, 0, 1};
+	double dist[] = {0, 0, 0, 0};
+	cv_bridge::DistortionMap dm = cv_bridge::init_undistort_rectify_map(camera, dist, 100, 100);
+	assertFalse( dm.empty() );
+	assertEquals( 100u, dm.width );
+	assertEquals( 100u, dm.height );
+
+	Image src = cv_bridge::create(100, 100, 3, 128);
+	Image dst;
+	cv_bridge::remap(src, dst, dm);
+	assertFalse( dst.empty() );
+	assertEquals( 100u, dst.width );
+	assertEquals( 100u, dst.height );
+}
+
+TEST_CASE( "bitmatrixTest/testMatToBitbufferRemainder", "[unit]" )
+{
+	// Regression: remainder packing must use MSB-first bit positions
+	// 10x10 binary image has 100 pixels = 12 full bytes + 4 remainder pixels
+	Image img(10, 10, 1, 0);
+	// set all pixels to 255 (binary 1)
+	for (unsigned i = 0; i < 100; ++i)
+		img.data[i] = 255;
+
+	bitbuffer bb(100);
+	bitmatrix::mat_to_bitbuffer(img, bb.get_writer());
+
+	// all 100 bits should be 1
+	// first 12 bytes (96 bits) should be 0xFF
+	for (int i = 0; i < 12; ++i)
+		assertEquals( (uint8_t)0xFF, (uint8_t)bb.buffer()[i] );
+
+	// remainder byte: 4 pixels at MSB positions (bits 7,6,5,4) = 0xF0
+	assertEquals( (uint8_t)0xF0, (uint8_t)bb.buffer()[12] );
 }
