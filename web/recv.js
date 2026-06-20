@@ -414,6 +414,10 @@ var Recv = function () {
 
     set_title: function (msg) {
       document.title = "Cimbar: " + msg;
+    },
+
+    set_video: function (video) {
+      _video = video;
     }
   };
 }();

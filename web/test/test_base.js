@@ -34,10 +34,7 @@ async function load_image(num) {
   const img = document.getElementById('example_frame' + num);
   const imageBitmap = await window.createImageBitmap(img);
   imageBitmap.requestVideoFrameCallback = function () { };
-
-  try {
-    Recv.init_video(imageBitmap);
-  } catch (ex) { }
+  Recv.set_video(imageBitmap);
 }
 
 QUnit.testStart(async function (details) {
